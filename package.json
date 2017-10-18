@@ -1,0 +1,19 @@
+{
+  "name": "scrum-planner",
+  "version": "0.0.1",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sébastien r",
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "electron-twig": "^1.1.1",
+    "jquery": "^3.2.1"
+  },
+  "devDependencies": {
+    "electron": "^1.7.9"
+  }
+}
