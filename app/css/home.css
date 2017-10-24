@@ -1,0 +1,10 @@
+body{
+    background-color: #ede8e8;
+}
+
+#welcome{
+    color: white;
+    min-height: 45%;
+    background: #000 url("../img/bgHome.jpg") center center;
+    background-size:100% auto;
+}
