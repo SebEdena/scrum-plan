@@ -4,7 +4,10 @@ body{
 
 #welcome{
     color: white;
-    min-height: 45%;
     background: #000 url("../img/bgHome.jpg") center center;
-    background-size:100% auto;
+    background-size: cover;
+}
+
+.jumbotron hr{
+    background-color: white;
 }

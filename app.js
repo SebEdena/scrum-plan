@@ -23,5 +23,5 @@ app.on("ready", function(){
         mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
     }, 1000);
 
-    // mainWindow.webContents.openDevTools({mode:"detach"});
+    mainWindow.webContents.openDevTools({mode:"detach"});
 });

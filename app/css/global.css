@@ -1,0 +1,11 @@
+a{
+    cursor:pointer;
+}
+
+.table-borderless td, .table-borderless th {
+    border: none;
+}
+
+.btn {
+    color: white !important;
+}

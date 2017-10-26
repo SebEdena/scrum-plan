@@ -10,10 +10,11 @@
   "author": "Sébastien r",
   "license": "MIT",
   "dependencies": {
-    "bootstrap": "^3.3.7",
+    "bootstrap": "^4.0.0-beta.2",
     "dragula": "^3.7.2",
     "electron-twig": "^1.1.1",
-    "jquery": "^3.2.1"
+    "jquery": "^3.2.1",
+    "popper.js": "^1.12.6"
   },
   "devDependencies": {
     "electron": "^1.7.9"
