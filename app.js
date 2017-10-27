@@ -5,6 +5,7 @@ const BrowserWindow = require("electron").BrowserWindow;
 let db = require('./db/config.js');
 
 let mainWindow = null;
+global.data = {}
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
@@ -22,7 +23,9 @@ app.on("ready", function(){
 
     setTimeout(()=>{
         mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
+        db.init(mainWindow.webContents);
         db.connect();
+        db.fetch("projects");
         mainWindow.webContents.openDevTools({mode:"detach"});
     }, 1000);
 });

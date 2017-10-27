@@ -35,3 +35,5 @@ CREATE TRIGGER deleted_projects_trigger AFTER DELETE ON projects
 FOR EACH ROW EXECUTE PROCEDURE notify_projects_delete();
 
 INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda enigne that finally works');
+
+GRANT SELECT, UPDATE, DELETE on projects to scrum_user;
