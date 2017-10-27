@@ -2,6 +2,7 @@
 
 const {app, globalShortcut} = require('electron');
 const BrowserWindow = require("electron").BrowserWindow;
+let db = require('./db/config.js');
 
 let mainWindow = null;
 
@@ -21,7 +22,7 @@ app.on("ready", function(){
 
     setTimeout(()=>{
         mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
+        db.connect();
+        mainWindow.webContents.openDevTools({mode:"detach"});
     }, 1000);
-
-    mainWindow.webContents.openDevTools({mode:"detach"});
 });
