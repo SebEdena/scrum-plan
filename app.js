@@ -5,7 +5,7 @@ const BrowserWindow = require("electron").BrowserWindow;
 let db = require('./db/config.js');
 
 let mainWindow = null;
-global.data = {}
+global.data = {};
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({

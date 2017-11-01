@@ -36,4 +36,7 @@ FOR EACH ROW EXECUTE PROCEDURE notify_projects_delete();
 
 INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda enigne that finally works');
 
-GRANT SELECT, UPDATE, DELETE on projects to scrum_user;
+GRANT CONNECT ON DATABASE scrum to scrum_user;
+GRANT USAGE ON SCHEMA public to scrum_user;
+GRANT SELECT, INSERT, UPDATE, DELETE on ALL TABLES IN SCHEMA public to scrum_user;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public to scrum_user;
