@@ -1,4 +1,6 @@
 const {ipcRenderer} = require('electron');
+const notifier = require('node-notifier');
+const path = require('path');
 let data = require('electron').remote.getGlobal("data");
 
 $("#open").on("click", function(){
@@ -9,9 +11,8 @@ $("#create").on("click", function(){
     $("#modal_create_project").modal("show");
 });
 
-$("#create").on("hide.bs.modal", function(){
-    $("#input_pj_name").val('');
-    $("#input_pj_desc").val('');
+$("#modal_create_project").on("hidden.bs.modal", function(){
+    $("#create_pj_form").find('textarea,input').val('');
 });
 
 $("#create_pj_form").on("submit", function(e){
@@ -29,6 +30,12 @@ ipcRenderer.on("load", (event, args) => {
         default:
             break;
     }
+});
+
+ipcRenderer.on("created", (event, args) => {
+    console.log(args);
+    var params = init_notification(args);
+    notifier.notify (params);
 });
 
 function load_projects(){
@@ -50,6 +57,32 @@ function load_projects(){
     }else{
         $("#html_open_project").append(`<h5>No project found.</h5>`);
     }
+}
+
+function init_notification(args){
+    var param = {sound: true, wait: false};
+    if(args['status'] === "ok"){
+        param['title'] = 'Success!';
+        param['icon'] = path.join(__dirname, '../img/ok.png');
+        switch(args["kind"]){
+            case "project": param['message'] = "The project \""
+                + args['data']["name"] + "\" has been successfully created.";
+                break;
+            default:
+                break;
+        }
+    }else{
+        param['title'] = 'Error!';
+        param['icon'] = path.join(__dirname, '../img/nok.png');
+        switch(args["kind"]){
+            case "project": param['message'] = "The project \""
+                + args['data']["name"] + "\" could not be created.";
+                break;
+            default:
+                break;
+        }
+    }
+    return param;
 }
 
 load_projects();

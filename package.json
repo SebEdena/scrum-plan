@@ -10,10 +10,12 @@
   "author": "Sébastien Viguier",
   "license": "MIT",
   "dependencies": {
+    "async": "^2.5.0",
     "bootstrap": "^4.0.0-beta.2",
     "dragula": "^3.7.2",
     "electron-twig": "^1.1.1",
     "jquery": "^3.2.1",
+    "node-notifier": "^5.1.2",
     "pg": "^7.3.0",
     "popper.js": "^1.12.6",
     "socket.io": "^2.0.4"

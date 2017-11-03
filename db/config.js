@@ -1,7 +1,7 @@
-var pg = require('pg');
-var {ipcMain} = require('electron');
+const pg = require('pg');
+const {ipcMain} = require('electron');
 
-var client = new pg.Client({
+let client = new pg.Client({
     user: "scrum_user",
     password: "b8aveK",
     host: "localhost",
@@ -23,7 +23,9 @@ function create(type, data){
         default: break;
     }
     client.query(query, (err, res) => {
-        return err;
+        if(err){
+            throw err;
+        }
     });
 }
 
@@ -33,15 +35,19 @@ module.exports = {
     },
 
     connect: function(){
+        var nok = new Error("Server unavailable");
         client.connect((err) => {
             if (err) {
-                console.error('connection error', err.stack);
-            } else {
+                return err;
             }
+                console.log('enterd connect()');
+            nok = null;
         });
+        return nok;
     },
 
     fetch: function(type){
+        console.log("here");
         var query = null;
         switch (type) {
             case "projects": query = {name: 'fetch-projects',
@@ -52,11 +58,14 @@ module.exports = {
         }
         if(query){
             client.query(query, (err, res) => {
+                console.log(err);
+                console.log(res);
                 if(err){
-                    console.error(err.stack);
+                    return {err};
                 } else {
                     global.data[type] = JSON.parse(JSON.stringify(res.rows));
                     channel_send.send("load", {type: ""+type});
+                    return null;
                 }
             });
         }
@@ -64,14 +73,19 @@ module.exports = {
 };
 
 ipcMain.on("create", (event, args) => {
-    var result = create(args['type'], args['data']);
-    console.log(!result);
-    if(!result){
-        // if result is true, there is an error;
-        event.sender.send('created', 'ok', args['data'], result);
-    }else{
-        event.sender.send('created', 'nok', args['data'], result);
+    var result;
+    var obj = { data: args['data'],
+                kind: args['type'],
+                err: null};
+    try{
+        result = create(args['type'], args['data']);
+        obj['status'] = "ok";
+    }catch(err){
+        console.log(err);
+        obj['status'] = "nok";
+        obj['err'] = err;
     }
+    event.sender.send('created', obj);
 });
 
 var require = function(path) {
