@@ -37,6 +37,9 @@ function connect(){
             cb(db.connect());
         },
         function(cb){
+            cb(db.init_realtime());
+        },
+        function(cb){
             cb(db.fetch("projects"));
         },
     ], function (err, result) {

@@ -14,7 +14,7 @@ CREATE FUNCTION notify_projects_change() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM pg_notify('rowchange', format('%s: %s', NEW.id, row_to_json(NEW)::text));
+    PERFORM pg_notify('rowchange', format('{%s: %s}', TG_TABLE_NAME, row_to_json(NEW)::text));
     RETURN NULL;
 END;
 $$;
@@ -23,7 +23,7 @@ CREATE FUNCTION notify_projects_delete() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM pg_notify('rowdelete', format('%s: %s', OLD.id, row_to_json(OLD)::text));
+    PERFORM pg_notify('rowdelete', format('%s: %s', TG_TABLE_NAME, row_to_json(OLD)::text));
     RETURN NULL;
 END;
 $$;

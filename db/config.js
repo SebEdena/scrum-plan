@@ -31,6 +31,37 @@ function create(type, data){
     });
 }
 
+ipcMain.on("create", (event, args) => {
+    var result;
+    var obj = { data: args['data'],
+                kind: args['type'],
+                err: null};
+    try{
+        result = create(args['type'], args['data']);
+        obj['status'] = "ok";
+    }catch(err){
+        console.log(err);
+        obj['status'] = "nok";
+        obj['err'] = err;
+    }
+    event.sender.send('created', obj);
+});
+
+client.on('error', (err) => {
+    switch(err.code){
+        case "57P01":
+            dialog.showMessageBox({
+                type: 'error',
+                buttons: ['Ok'],
+                message: 'Connection with server interrupted. The application will quit.',
+            }, resp => {
+            if (resp === 0) {
+                app.quit();
+            }
+        });
+    }
+});
+
 module.exports = {
     init: function(send, appli){
         channel_send = send;
@@ -44,6 +75,20 @@ module.exports = {
                 return err;
             }
             nok = null;
+        });
+        return null;
+    },
+
+    init_realtime: function(){
+        client.query("LISTEN rowchange; LISTEN rowdelete", (err,res) => {
+            if(err){
+                console.error(err);
+            }
+        });
+        client.on("notification", (data) => {
+            let item = JSON.parse(JSON.stringify(data.payload));
+            console.log(Object.keys(item));
+            // channel_send.send("load");
         });
         return null;
     },
@@ -71,37 +116,6 @@ module.exports = {
     }
 };
 
-ipcMain.on("create", (event, args) => {
-    var result;
-    var obj = { data: args['data'],
-                kind: args['type'],
-                err: null};
-    try{
-        result = create(args['type'], args['data']);
-        obj['status'] = "ok";
-    }catch(err){
-        console.log(err);
-        obj['status'] = "nok";
-        obj['err'] = err;
-    }
-    event.sender.send('created', obj);
-});
-
 var require = function(path) {
     return module.exports;
 };
-
-client.on('error', (err) => {
-    switch(err.code){
-        case "57P01":
-            dialog.showMessageBox({
-                type: 'error',
-                buttons: ['Ok'],
-                message: 'Connection with server interrupted. The application will quit.',
-            }, resp => {
-            if (resp === 0) {
-                app.quit();
-            }
-        });
-    }
-});
