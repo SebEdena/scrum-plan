@@ -21,6 +21,7 @@ $("#create_pj_form").on("submit", function(e){
     data['name'] = $("#input_pj_name").val();
     data['description'] = $("#input_pj_desc").val();
     ipcRenderer.send("create", {type:"project", data: data});
+    $("#modal_create_project").modal("hide");
 });
 
 ipcRenderer.on("load", (event, args) => {

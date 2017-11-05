@@ -2,21 +2,24 @@ const {ipcRenderer} = require('electron');
 
 $("#modal_connect").modal({
     backdrop: false,
-    keyboard: false
+    keyboard: false,
+    show: false
 });
 
 $("#retry").on('click', function(){
-    $("#modal_connect").modal('hide');
+    hideModal("modal_connect");
     ipcRenderer.send("action", "reconnect");
 });
 
 $("#close").on('click', function(){
-    $("#modal_connect").modal('hide');
+    hideModal("modal_connect");
     ipcRenderer.send("action", "quit");
 });
 
-ipcRenderer.on('error', (args) => {
+ipcRenderer.on('error', (event, args) => {
     if(args['type'] === "connection"){
-        $("modal_connect").modal('show');
+        showModal("modal_connect");
     }
 });
+
+ipcRenderer.send("action", "ready");

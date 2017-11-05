@@ -1,5 +1,6 @@
+'use strict'
 const pg = require('pg');
-const {ipcMain} = require('electron');
+const {ipcMain, dialog} = require('electron');
 
 let client = new pg.Client({
     user: "scrum_user",
@@ -9,7 +10,8 @@ let client = new pg.Client({
     database: "scrum"
 });
 
-var channel_send = null;
+let channel_send = null;
+let app = null;
 
 function create(type, data){
     var query = null;
@@ -30,8 +32,9 @@ function create(type, data){
 }
 
 module.exports = {
-    init: function(send){
+    init: function(send, appli){
         channel_send = send;
+        app = appli;
     },
 
     connect: function(){
@@ -40,14 +43,12 @@ module.exports = {
             if (err) {
                 return err;
             }
-                console.log('enterd connect()');
             nok = null;
         });
-        return nok;
+        return null;
     },
 
     fetch: function(type){
-        console.log("here");
         var query = null;
         switch (type) {
             case "projects": query = {name: 'fetch-projects',
@@ -58,10 +59,8 @@ module.exports = {
         }
         if(query){
             client.query(query, (err, res) => {
-                console.log(err);
-                console.log(res);
                 if(err){
-                    return {err};
+                    return err;
                 } else {
                     global.data[type] = JSON.parse(JSON.stringify(res.rows));
                     channel_send.send("load", {type: ""+type});
@@ -91,3 +90,18 @@ ipcMain.on("create", (event, args) => {
 var require = function(path) {
     return module.exports;
 };
+
+client.on('error', (err) => {
+    switch(err.code){
+        case "57P01":
+            dialog.showMessageBox({
+                type: 'error',
+                buttons: ['Ok'],
+                message: 'Connection with server interrupted. The application will quit.',
+            }, resp => {
+            if (resp === 0) {
+                app.quit();
+            }
+        });
+    }
+});

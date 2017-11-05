@@ -6,6 +6,7 @@ const async = require('async');
 let db = require('./db/config.js');
 
 let mainWindow = null;
+let ready = false;
 global.data = {};
 
 app.on("ready", function(){
@@ -16,11 +17,12 @@ app.on("ready", function(){
         show: false
     });
 
+    mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
+
     mainWindow.on("ready-to-show", () => {
         mainWindow.show();
     });
 
-    mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
     mainWindow.webContents.openDevTools({mode:"detach"});
 
     connect();
@@ -29,7 +31,7 @@ app.on("ready", function(){
 function connect(){
     async.waterfall([
         function(cb){
-            cb(db.init(mainWindow.webContents));
+            cb(db.init(mainWindow.webContents, app));
         },
         function(cb){
             cb(db.connect());
@@ -39,17 +41,19 @@ function connect(){
         },
     ], function (err, result) {
         if(err){
-            mainWindow.webContents.send('error', {type: "connection", err: {err}});
+            mainWindow.webContents.send('error', {type: "connection", err: err});
         }else{
             setTimeout(()=>{
                 mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
-            }, 1000);
+            }, 3000);
         }
     });
 }
 
 ipcMain.on("action", (event, args) => {
     switch(args){
+        case "ready": ready = true;
+            break;
         case "reconnect": connect();
             break;
         case "quit": app.exit();
