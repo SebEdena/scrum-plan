@@ -31,6 +31,32 @@ function create(type, data){
     });
 }
 
+function update_data(item, type, action){
+    if(action === "rowchange"){
+        let found = false;
+        for(let obj of global.data[type]){
+            if(obj.id === item[0][type].id){
+                obj = item;
+                found = true;
+                break;
+            }
+        }
+        if(!found){
+            global.data[type].push(item[0][type]);
+        }
+    }
+    if(action === "rowdelete"){
+        let del = null;
+        for(let obj in global.data[type]){
+            if(global.data[type][obj].id === item[0][type].id){
+                del = obj;
+                break;
+            }
+        }
+        global.data[type].splice(del, 1);
+    };
+};
+
 ipcMain.on("create", (event, args) => {
     var result;
     var obj = { data: args['data'],
@@ -86,9 +112,11 @@ module.exports = {
             }
         });
         client.on("notification", (data) => {
-            let item = JSON.parse(JSON.stringify(data.payload));
-            console.log(Object.keys(item));
-            // channel_send.send("load");
+            let item = JSON.parse(data.payload);
+            let type = String(Object.keys(item[0])[0]);
+            update_data(item, type, data.channel);
+            channel_send.send("load", {type: type});
+            console.log(global.data);
         });
         return null;
     },

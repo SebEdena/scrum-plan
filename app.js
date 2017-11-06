@@ -7,7 +7,7 @@ let db = require('./db/config.js');
 
 let mainWindow = null;
 let ready = false;
-global.data = {};
+global.data = {'projects': {}};
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({

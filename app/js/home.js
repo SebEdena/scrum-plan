@@ -25,7 +25,7 @@ $("#create_pj_form").on("submit", function(e){
 });
 
 ipcRenderer.on("load", (event, args) => {
-    switch (args['type']){
+    switch (String(args['type'])){
         case "projects": load_projects();
             break;
         default:
@@ -34,14 +34,14 @@ ipcRenderer.on("load", (event, args) => {
 });
 
 ipcRenderer.on("created", (event, args) => {
-    console.log(args);
     var params = init_notification(args);
     notifier.notify (params);
 });
 
 function load_projects(){
+    data = require('electron').remote.getGlobal("data");
     $("#html_open_project").html("");
-    if (data['projects'] !== undefined){
+    if (data['projects'].length != 0){
         for (project of data['projects']){
             var div = $.parseHTML(`
                 <div class="row mt-3 project">
