@@ -1,5 +1,6 @@
 function switch_tab(source){
-  if($(source).prop("id") === $(".nav-group-item.active").prop("id")){
+  if($(source).prop("id") === $(".nav-group-item.active").prop("id") &&
+      $(".tab-item").length !== 0){
     return;
   }
   var tab = $(".tab-item[id=" + $(source).prop("id") + "]");
@@ -63,4 +64,4 @@ $(".icon-close-tab").on('click', (e) => {
     close($(e.target).parent());
 });
 
-toggle('home');
+switch_tab($(".nav-group-item[id=home]"));
