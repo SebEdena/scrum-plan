@@ -7,10 +7,11 @@ let db = require('./db/config.js');
 
 let mainWindow = null;
 let ready = false;
-global.data = {'projects': {}};
+global.data = {projects: [], current:{}};
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
+
         width: 900,
         height: 700,
         title: "Scrum Assistant",
@@ -31,7 +32,7 @@ app.on("ready", function(){
 function connect(){
     async.waterfall([
         function(cb){
-            cb(db.init(mainWindow.webContents, app));
+            cb(db.init(mainWindow, app));
         },
         function(cb){
             cb(db.connect());

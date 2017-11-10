@@ -1,0 +1,31 @@
+.nav-group-item *, .tab-group * {
+    cursor:pointer;
+}
+
+.nav-group-item > .icon {
+    margin-top: 1.5px;
+}
+
+.nav-group-item{
+    -webkit-transition: background-color 0.5s;
+}
+
+.nav-group-item:hover{
+    background-color: #dbdada;
+}
+
+.tab-group {
+    background-color: rgb(240, 240, 240) !important;
+}
+
+.tab-item {
+    background-color: rgb(232, 232, 232) !important;
+}
+
+.active{
+    background-color: #cfcccc !important;
+}
+
+.tab-group{
+    background-color: rgb(245, 245, 244);
+}

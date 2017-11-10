@@ -10,6 +10,7 @@ let client = new pg.Client({
     database: "scrum"
 });
 
+let view = null;
 let channel_send = null;
 let app = null;
 
@@ -66,11 +67,21 @@ ipcMain.on("create", (event, args) => {
         result = create(args['type'], args['data']);
         obj['status'] = "ok";
     }catch(err){
-        console.log(err);
         obj['status'] = "nok";
         obj['err'] = err;
     }
     event.sender.send('created', obj);
+});
+
+ipcMain.on("open_project", (event, args)=>{
+    for(var i in global.data['projects']){
+        if(args.id === global.data['projects'][i].id){
+            global.data['current'] = global.data['projects'][i];
+            break;
+        }
+    }
+    //PJ not found ?
+    view.loadURL('file://' + __dirname + '/../app/html/workspace.html');
 });
 
 client.on('error', (err) => {
@@ -89,8 +100,9 @@ client.on('error', (err) => {
 });
 
 module.exports = {
-    init: function(send, appli){
-        channel_send = send;
+    init: function(front, appli){
+        view = front;
+        channel_send = front.webContents;
         app = appli;
     },
 
@@ -108,7 +120,7 @@ module.exports = {
     init_realtime: function(){
         client.query("LISTEN rowchange; LISTEN rowdelete", (err,res) => {
             if(err){
-                console.error(err);
+                return err;
             }
         });
         client.on("notification", (data) => {
@@ -116,7 +128,6 @@ module.exports = {
             let type = String(Object.keys(item[0])[0]);
             update_data(item, type, data.channel);
             channel_send.send("load", {type: type});
-            console.log(global.data);
         });
         return null;
     },

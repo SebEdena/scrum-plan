@@ -1,6 +1,5 @@
 const {ipcRenderer} = require('electron');
 const notifier = require('node-notifier');
-const path = require('path');
 let data = require('electron').remote.getGlobal("data");
 
 $("#open").on("click", function(){
@@ -41,7 +40,7 @@ ipcRenderer.on("created", (event, args) => {
 function load_projects(){
     data = require('electron').remote.getGlobal("data");
     $("#html_open_project").html("");
-    if (data['projects'].length != 0){
+    if (data['projects'].length !== 0){
         for (project of data['projects']){
             var div = $.parseHTML(`
                 <div class="row mt-3 project">
@@ -52,9 +51,15 @@ function load_projects(){
                 <div class="col-sm-3 text-center"><a role="button" class="btn btn-success btn-sm">Open</a></div>
                 </div>
                 `);
-                $(div).find(".project").data("project_id", project.id);
+                $(div).data("project_id", project.id);
                 $("#html_open_project").append($(div));
-            }
+
+            $(div).find(".btn-success").on('click', function(){
+                $("#modal_open_project").modal("hide");
+                $("#create, #open").off("click");
+                ipcRenderer.send('open_project', {id:project.id});
+            });
+        }
     }else{
         $("#html_open_project").append(`<h5>No project found.</h5>`);
     }

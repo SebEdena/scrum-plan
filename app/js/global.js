@@ -1,3 +1,4 @@
+const path = require('path');
 let hideInProgress = false;
 let showModalId = '';
 
