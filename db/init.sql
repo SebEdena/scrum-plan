@@ -1,16 +1,27 @@
-DROP TRIGGER IF EXISTS updated_projects_trigger ON projects;
-DROP TRIGGER IF EXISTS deleted_projects_trigger ON projects;
-DROP FUNCTION IF EXISTS notify_projects_delete;
-DROP FUNCTION IF EXISTS notify_projects_change;
-DROP TABLE IF EXISTS projects;
+DROP TRIGGER IF EXISTS updated_projects_trigger ON projects CASCADE;
+DROP TRIGGER IF EXISTS deleted_projects_trigger ON projects CASCADE;
+DROP TRIGGER IF EXISTS updated_user_stories_trigger ON user_stories CASCADE;
+DROP TRIGGER IF EXISTS deleted_user_stories_trigger ON user_stories CASCADE;
+DROP FUNCTION IF EXISTS notify_change CASCADE;
+DROP FUNCTION IF EXISTS notify_delete CASCADE;
+DROP TABLE IF EXISTS user_stories CASCADE;
+DROP TABLE IF EXISTS projects CASCADE;
 
 CREATE TABLE projects(
     id SERIAL NOT NULL PRIMARY KEY,
-    title VARCHAR(128),
+    title VARCHAR(128) NOT NULL,
     description VARCHAR(256)
 );
 
-CREATE FUNCTION notify_projects_change() RETURNS trigger
+CREATE TABLE user_stories(
+    id SERIAL NOT NULL PRIMARY KEY,
+    project INTEGER NOT NULL REFERENCES projects(id),
+    sprint INTEGER DEFAULT -1,
+    feature VARCHAR(256) NOT NULL,
+    logs VARCHAR(512)
+);
+
+CREATE FUNCTION notify_change() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -19,7 +30,7 @@ BEGIN
 END;
 $$;
 
-CREATE FUNCTION notify_projects_delete() RETURNS trigger
+CREATE FUNCTION notify_delete() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -29,12 +40,19 @@ END;
 $$;
 
 CREATE TRIGGER updated_projects_trigger AFTER INSERT OR UPDATE ON projects
-FOR EACH ROW EXECUTE PROCEDURE notify_projects_change();
-
+FOR EACH ROW EXECUTE PROCEDURE notify_change();
 CREATE TRIGGER deleted_projects_trigger AFTER DELETE ON projects
-FOR EACH ROW EXECUTE PROCEDURE notify_projects_delete();
+FOR EACH ROW EXECUTE PROCEDURE notify_delete();
+
+CREATE TRIGGER updated_user_stories_trigger AFTER INSERT OR UPDATE ON user_stories
+FOR EACH ROW EXECUTE PROCEDURE notify_change();
+CREATE TRIGGER deleted_user_stories_trigger AFTER DELETE ON user_stories
+FOR EACH ROW EXECUTE PROCEDURE notify_delete();
 
 INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda enigne that finally works');
+
+INSERT INTO user_stories (feature, logs, project) VALUES ('Create Engine Block', 'Get help from Mercedes maybe', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
+INSERT INTO user_stories (feature, logs, project) VALUES ('Add Turbo', 'Reliable please !', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
 
 GRANT CONNECT ON DATABASE scrum to scrum_user;
 GRANT USAGE ON SCHEMA public to scrum_user;

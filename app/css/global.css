@@ -1,5 +1,9 @@
-a, button, .nav-group-item{
-    cursor:pointer;
+a, button, input:enabled, textarea:enabled, .nav-group-item{
+    cursor:pointer !important;
+}
+
+input:focus, textarea:focus{
+    cursor:text !important;
 }
 
 .table-borderless td, .table-borderless th {
