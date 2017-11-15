@@ -1,3 +1,6 @@
+const {ipcRenderer} = require('electron');
+const remote = require('electron').remote;
+
 function switch_tab(source){
   if($(source).prop("id") === $(".nav-group-item.active").prop("id") &&
       $(".tab-item").length !== 0){

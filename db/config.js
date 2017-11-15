@@ -84,6 +84,13 @@ ipcMain.on("open_project", (event, args)=>{
     view.loadURL('file://' + __dirname + '/../app/html/workspace.html');
 });
 
+ipcMain.on("fetch", (event, args) => {
+    switch(args.type){
+        case "user_stories": module.exports.fetch(args.type); break;
+        default: break;
+    }
+});
+
 client.on('error', (err) => {
     switch(err.code){
         case "57P01":
@@ -135,9 +142,17 @@ module.exports = {
     fetch: function(type){
         var query = null;
         switch (type) {
-            case "projects": query = {name: 'fetch-projects',
-                             text: 'SELECT * FROM projects'};
-                break;
+            case "projects": query = {
+                                name: 'fetch-projects',
+                                text: 'SELECT * FROM projects p ORDER BY p.id'
+                             };
+                             break;
+            case "user_stories": query = {
+                                        name: 'fetch-all-user-stories',
+                                        text: 'SELECT us.* FROM user_stories us WHERE us.project=$1 ORDER BY us.id',
+                                        values: [global.data.current.id]
+                                 };
+                                 break;
             default:
                 break;
         }
