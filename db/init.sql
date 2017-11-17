@@ -2,6 +2,7 @@ DROP TRIGGER IF EXISTS updated_projects_trigger ON projects CASCADE;
 DROP TRIGGER IF EXISTS deleted_projects_trigger ON projects CASCADE;
 DROP TRIGGER IF EXISTS updated_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS deleted_user_stories_trigger ON user_stories CASCADE;
+DROP TRIGGER IF EXISTS pick_us_number ON user_stories CASCADE;
 DROP FUNCTION IF EXISTS us_inc CASCADE;
 DROP FUNCTION IF EXISTS notify_change CASCADE;
 DROP FUNCTION IF EXISTS notify_delete CASCADE;
@@ -23,13 +24,16 @@ CREATE TABLE user_stories(
     PRIMARY KEY (project, id)
 );
 
-CREATE OR REPLACE FUNCTION us_inc(project_id INTEGER) RETURNS INTEGER AS
-$BODY$
-    SELECT COALESCE(MAX(us.id) + 1, 1)
+CREATE OR REPLACE FUNCTION us_inc() RETURNS TRIGGER AS
+$$
+  BEGIN
+    NEW.id := (SELECT COALESCE(MAX(us.id) + 1, 1)
     FROM user_stories us
-    WHERE us.project = project_id
-$BODY$
-LANGUAGE sql VOLATILE;
+    WHERE us.project = NEW.project);
+    RETURN NEW;
+  END
+$$
+LANGUAGE plpgsql VOLATILE;
 
 CREATE OR REPLACE FUNCTION notify_change() RETURNS trigger
     LANGUAGE plpgsql
@@ -59,10 +63,13 @@ FOR EACH ROW EXECUTE PROCEDURE notify_change();
 CREATE TRIGGER deleted_user_stories_trigger AFTER DELETE ON user_stories
 FOR EACH ROW EXECUTE PROCEDURE notify_delete();
 
+CREATE TRIGGER pick_us_number BEFORE INSERT ON user_stories
+FOR EACH ROW EXECUTE PROCEDURE us_inc();
+
 INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda enigne that finally works');
 
-INSERT INTO user_stories (feature, logs, project, id) VALUES ('Create Engine Block', 'Get help from Mercedes maybe', (SELECT p.id FROM projects p WHERE p.title='Honda Works'), 1);
-INSERT INTO user_stories (feature, logs, project, id) VALUES ('Add Turbo', 'Reliable please !', (SELECT p.id FROM projects p WHERE p.title='Honda Works'), 2);
+INSERT INTO user_stories (feature, logs, project) VALUES ('Create Engine Block', 'Get help from Mercedes maybe', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
+INSERT INTO user_stories (feature, logs, project) VALUES ('Add Turbo', 'Reliable please !', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
 
 GRANT CONNECT ON DATABASE scrum to scrum_user;
 GRANT USAGE ON SCHEMA public to scrum_user;

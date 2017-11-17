@@ -1,5 +1,6 @@
 const {ipcRenderer} = require('electron');
 const remote = require('electron').remote;
+let project_id = remote.getGlobal('data').current.id;
 
 function switch_tab(source){
   if($(source).prop("id") === $(".nav-group-item.active").prop("id") &&

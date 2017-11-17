@@ -15,14 +15,20 @@ let channel_send = null;
 let app = null;
 
 function create(type, data){
-    var query = null;
+    let query = null;
     switch(type){
         case "project": query = {
                         name: "create-project",
                         text: "INSERT INTO projects(title, description) VALUES ($1, $2)",
                         values: [data.name, data.description]
-                        }
+                        };
                         break;
+        case "us": query = {
+                      name: "create-user-story",
+                      text: "INSERT INTO user_stories (feature, logs, project) VALUES ($1, $2, $3)",
+                      values: [data.feature, data.logs, data.project]
+                      };
+                      break;
         default: break;
     }
     client.query(query, (err, res) => {
@@ -33,6 +39,7 @@ function create(type, data){
 }
 
 function update_data(item, type, action){
+    console.log('wtf');
     if(action === "rowchange"){
         let found = false;
         for(let obj of global.data[type]){
@@ -59,12 +66,11 @@ function update_data(item, type, action){
 };
 
 ipcMain.on("create", (event, args) => {
-    var result;
-    var obj = { data: args['data'],
+    let obj = { data: args['data'],
                 kind: args['type'],
                 err: null};
     try{
-        result = create(args['type'], args['data']);
+        create(args['type'], args['data']);
         obj['status'] = "ok";
     }catch(err){
         obj['status'] = "nok";
@@ -74,7 +80,7 @@ ipcMain.on("create", (event, args) => {
 });
 
 ipcMain.on("open_project", (event, args)=>{
-    for(var i in global.data['projects']){
+    for(let i in global.data['projects']){
         if(args.id === global.data['projects'][i].id){
             global.data['current'] = global.data['projects'][i];
             break;
@@ -114,7 +120,7 @@ module.exports = {
     },
 
     connect: function(){
-        var nok = new Error("Server unavailable");
+        let nok = new Error("Server unavailable");
         client.connect((err) => {
             if (err) {
                 return err;
@@ -134,13 +140,13 @@ module.exports = {
             let item = JSON.parse(data.payload);
             let type = String(Object.keys(item[0])[0]);
             update_data(item, type, data.channel);
-            channel_send.send("load", {type: type});
+            channel_send.send("update", {type: type});
         });
         return null;
     },
 
     fetch: function(type){
-        var query = null;
+        let query = null;
         switch (type) {
             case "projects": query = {
                                 name: 'fetch-projects',
@@ -153,8 +159,7 @@ module.exports = {
                                         values: [global.data.current.id]
                                  };
                                  break;
-            default:
-                break;
+            default: break;
         }
         if(query){
             client.query(query, (err, res) => {
@@ -162,7 +167,7 @@ module.exports = {
                     return err;
                 } else {
                     global.data[type] = JSON.parse(JSON.stringify(res.rows));
-                    channel_send.send("load", {type: ""+type});
+                    channel_send.send("load", {type: type});
                     return null;
                 }
             });

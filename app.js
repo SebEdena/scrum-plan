@@ -7,11 +7,10 @@ let db = require('./db/config.js');
 
 let mainWindow = null;
 let ready = false;
-global.data = {projects: [], current:{}};
+global.data = {projects: [], current: null, user_stories: []};
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
-
         width: 900,
         height: 700,
         title: "Scrum Assistant",

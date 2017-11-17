@@ -23,7 +23,7 @@ $("#create_pj_form").on("submit", function(e){
     $("#modal_create_project").modal("hide");
 });
 
-ipcRenderer.on("load", (event, args) => {
+ipcRenderer.on("update", (event, args) => {
     switch (String(args['type'])){
         case "projects": load_projects();
             break;
