@@ -26,6 +26,6 @@
     background-color: #cfcccc !important;
 }
 
-.user_story{
+.user_story, .new_user_story{
     background-color: rgb(232, 232, 232);
 }

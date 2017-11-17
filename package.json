@@ -16,6 +16,7 @@
     "dragula": "^3.7.2",
     "electron-twig": "^1.1.1",
     "jquery": "^3.2.1",
+    "jquery-validation": "^1.17.0",
     "node-notifier": "^5.1.2",
     "pg": "^7.3.0",
     "photon": "git+https://github.com/connors/photon.git",

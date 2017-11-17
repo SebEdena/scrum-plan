@@ -38,7 +38,7 @@ function focus(elt){
         });
     }
     toggle($(elt).prop('id'));
-};
+}
 
 function toggle(elt){
     $(".content-page").toggle(false);
@@ -54,7 +54,7 @@ function close(elt){
             switch_tab($(".tab-item")[($(".tab-item").index(elt) - 1)]);
         }
     }
-    $(".content-page[id=" + elt.prop("id") + "]").remove();
+    $(".content-page[id=" + elt.prop("id") + "]").toggle(false);
     elt.remove();
 }
 
