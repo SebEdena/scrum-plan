@@ -14,18 +14,18 @@ let view = null;
 let channel_send = null;
 let app = null;
 
-function create(type, data){
+function create(type, data, callback){
     let query = null;
     switch(type){
         case "project": query = {
                         name: "create-project",
-                        text: "INSERT INTO projects(title, description) VALUES ($1, $2)",
+                        text: "INSERT INTO projects(title, description) VALUES ($1, $2) RETURNING projects.*",
                         values: [data.name, data.description]
                         };
                         break;
         case "us": query = {
                       name: "create-user-story",
-                      text: "INSERT INTO user_stories (feature, logs, project) VALUES ($1, $2, $3)",
+                      text: "INSERT INTO user_stories (feature, logs, project) VALUES ($1, $2, $3) RETURNING user_stories.*",
                       values: [data.feature, data.logs, data.project]
                       };
                       break;
@@ -33,13 +33,14 @@ function create(type, data){
     }
     client.query(query, (err, res) => {
         if(err){
-            throw err;
+            console.log(err.message);
+            return callback(err);
         }
+        return callback(res.rows[0]);
     });
 }
 
 function update_data(item, type, action){
-    console.log('wtf');
     if(action === "rowchange"){
         let found = false;
         for(let obj of global.data[type]){
@@ -66,17 +67,21 @@ function update_data(item, type, action){
 };
 
 ipcMain.on("create", (event, args) => {
-    let obj = { data: args['data'],
-                kind: args['type'],
-                err: null};
-    try{
-        create(args['type'], args['data']);
-        obj['status'] = "ok";
-    }catch(err){
-        obj['status'] = "nok";
-        obj['err'] = err;
-    }
-    event.sender.send('created', obj);
+    let ret = null;
+    let obj = {data: args['data'],
+               kind: args['type'],
+               err: null};
+
+    create(args['type'], args['data'], (ret) => {
+        if(typeof ret === 'Error'){
+          obj['status'] = "nok";
+          obj['err'] = ret;
+        }else{
+          Object.keys(ret).forEach((key) => obj['data'][key] = ret[key]);
+          obj['status'] = "ok";
+        }
+        event.sender.send('created', obj);
+    });
 });
 
 ipcMain.on("open_project", (event, args)=>{
