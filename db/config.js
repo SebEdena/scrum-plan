@@ -33,7 +33,6 @@ function create(type, data, callback){
     }
     client.query(query, (err, res) => {
         if(err){
-            console.log(err.message);
             return callback(err);
         }
         return callback(res.rows[0]);
@@ -66,6 +65,11 @@ function update_data(item, type, action){
     };
 };
 
+function send_update(args){
+    console.log('received update order');
+    console.log(args);
+}
+
 ipcMain.on("create", (event, args) => {
     let ret = null;
     let obj = {data: args['data'],
@@ -96,10 +100,11 @@ ipcMain.on("open_project", (event, args)=>{
 });
 
 ipcMain.on("fetch", (event, args) => {
-    switch(args.type){
-        case "user_stories": module.exports.fetch(args.type); break;
-        default: break;
-    }
+    module.exports.fetch(args.type);
+});
+
+ipcMain.on('update', (event, args) => {
+    send_update(args);
 });
 
 client.on('error', (err) => {

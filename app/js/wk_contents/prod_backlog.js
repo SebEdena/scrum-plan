@@ -10,8 +10,7 @@ ipcRenderer.on("load", (event, args) => {
 
 ipcRenderer.on("created", (event, args) => {
     if(args.kind === "us" && args.status === "ok"){
-        console.log(args);
-        //validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
+        validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
     }else{
         console.log(args);
     }
@@ -47,26 +46,24 @@ $('#create_us').on('click', () => {
 });
 
 function fill_us(){
-    console.log('entered fill us');
     for(let us of remote.getGlobal('data').user_stories){
-        console.log(us);
         let html = `
             <div class="container user_story rounded" id="us${us.id}">
                 <div class="d-flex justify-content-between align-items-end">
                         <div><h4>User Story #${us.id}</h4></div>
                         <div>
                             <span class="btn-group">
-                                <button type="button" class="btn btn-secondary">Edit</button>
-                                <button type="button" class="btn btn-danger">Delete</button>
+                                <button type="button" id="ok" class="btn btn-secondary">Edit</button>
+                                <button type="button" id="del" class="btn btn-danger">Delete</button>
                             </span>
                         </div>
                 </div>
                 <form>
                     <div class="form-group">
                         <label for="feat_us">Feature</label>
-                        <input type="text" class="form-control" id="feat_us" value="${us.feature}" placeholder="Enter story feature" maxlength="256" required disabled>
+                        <input type="text" class="form-control" id="feat_us" name="feature" value="${us.feature}" placeholder="Enter story feature" maxlength="256" required disabled>
                         <label class="pt-2" for="desc_us">Feature Logs</label>
-                        <textarea class="form-control mb-2" id="desc_us" rows="3" placeholder="Feature logs" maxlength="512" disabled>${us.logs}</textarea>
+                        <textarea class="form-control mb-2" id="desc_us" name="description" rows="3" placeholder="Feature logs" maxlength="512" disabled>${us.logs}</textarea>
                     </div>
                 </form>
             </div>
@@ -85,8 +82,9 @@ function init_create(item){
     });
     item.find("form").validate({
         submitHandler: (form) => {
-            item.find('button').val('Edit').removeClass("btn-success").addClass("btn-secondary");
+            item.find('#ok').text('Edit').removeClass("btn-success").addClass("btn-secondary");
             item.find('button').prop('disabled', true).off('click');
+            item.find("input, textarea").prop("disabled", true);
             let index = push_tmp();
             item.prop('id', 'us_tmp' + index);
             let data = {
@@ -95,7 +93,6 @@ function init_create(item){
                 project: project_id,
                 tmp_ticket: index
             };
-            console.log(data);
             ipcRenderer.send("create", {type: "us", data: data});
         },
         errorElement: "div"
@@ -103,18 +100,62 @@ function init_create(item){
 }
 
 function init_events(item){
-
+    item.find('#del').on('click', () => {
+        console.log(item.find('#del').text());
+        if(item.find('#del').text() === "Delete"){
+            item.remove();
+        }else{
+            for(let us of remote.getGlobal('data').user_stories){
+                if (us.id === item.prop('id').match(/\d+/)){
+                    item.find('form').feature.val(us.feature);
+                    item.find('form').description.val(us.logs);
+                    break;
+                }
+            }
+            item.find('#ok').text('Edit').removeClass("btn-success").addClass("btn-secondary");
+            item.find('#del').text('Delete');
+            item.find("input, textarea").prop("disabled", true);
+        }
+    });
+    item.find('#ok').on('click', () => {
+        console.log(item.find('#ok').text());
+        if(item.find('#ok').text() === "Ok"){
+            console.log("doing submit");
+            item.find('form').trigger('submit');
+        }else{
+            item.find("input, textarea").prop("disabled", false);
+            item.find('#ok').text('Ok');
+            item.find('#ok').removeClass('btn-secondary').addClass('btn-success');
+        }
+    });
+    item.find("form").validate({
+        submitHandler: (form) => {
+            item.find('#ok').text('Edit').removeClass("btn-success").addClass("btn-secondary");
+            item.find("input, textarea").prop("disabled", true);
+            // item.find('button').prop('disabled', true).off('click');
+            let data = {
+                feature: form.feature.value,
+                logs: form.description.value,
+                project: project_id
+            };
+            ipcRenderer.send("update", {type: "us", data: data});
+        },
+        errorElement: "div"
+    });
 }
 
-function validate_us(item){
-    // item.find('h4').text('User Story #' + )
+function validate_us(item, data){
+    pop_tmp(data.tmp_ticket);
+    item.find('h4').text('User Story #' + data.id);
+    item.prop('id', 'us' + data.id);
+    init_events(item);
+    item.find('button').prop('disabled', false);
 }
 
 function push_tmp(){
     for(index in tmp_us){
         if(tmp_us[index] === false){
             tmp_us[index] = true;
-            console.log(index);
             return index;
         }
     }
