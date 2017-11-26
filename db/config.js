@@ -2,6 +2,9 @@
 const pg = require('pg');
 const {ipcMain, dialog} = require('electron');
 
+let update_rules = {full:{types:['projects']},
+                    partial:{types:['user_stories']}};
+
 let client = new pg.Client({
     user: "scrum_user",
     password: "b8aveK",
@@ -39,39 +42,90 @@ function create(type, data, callback){
     });
 }
 
-function update_data(item, type, action){
-    if(action === "rowchange"){
-        let found = false;
-        for(let obj of global.data[type]){
-            if(obj.id === item[0][type].id){
-                obj = item;
-                found = true;
+function dispatch_action(item, type, action, callback){
+    if(action === "insert" || action === "update"){
+        for(var method of Object.keys(update_rules)){
+            if(update_rules[method].types.indexOf(type) >= 0){
+                update_rules[method].fct(item, type, ()=>{
+                    callback();
+                });
                 break;
             }
-        }
-        if(!found){
-            global.data[type].push(item[0][type]);
         }
     }
-    if(action === "rowdelete"){
-        let del = null;
-        for(let obj in global.data[type]){
-            if(global.data[type][obj].id === item[0][type].id){
-                del = obj;
-                break;
+    if(action === "delete"){
+        delete_item(item, type);
+    }
+}
+
+update_rules.full.fct = (item, type, callback) => {
+    let found = false;
+    for(let i in global.data[type]){
+        if(global.data[type][i].id === item[0][type].id){
+            for(let [key,value] of Object.entries(item[0][type])){
+                if(key !== 'id'){
+                    global.data[type][i][key] = value;
+                }
             }
+            found = true;
+            callback();
         }
-        global.data[type].splice(del, 1);
-    };
+    }
+    if(!found){
+        global.data[type].push(item[0][type]);
+        callback();
+    }
 };
 
-function send_update(args){
-    console.log('received update order');
-    console.log(args);
+update_rules.partial.fct = (item, type, callback) => {
+    let change = {
+        "user_stories": ['feature', 'logs']
+    };
+    let found = false;
+    for(let obj of global.data[type]){
+        if(obj.id === item[0][type].id){
+            for(let cols of change[type]){
+                obj[cols] = item[0][type][cols];
+            }
+            found = true;
+            callback();
+        }
+    }
+    if(!found){
+        global.data[type].push(item[0][type]);
+        callback();
+    }
+};
+
+function delete_item(item, type){
+    let del = null;
+    for(let obj in global.data[type]){
+        if(global.data[type][obj].id === item[0][type].id){
+            del = obj;
+            break;
+        }
+    }
+    global.data[type].splice(del, 1);
+}
+
+function send_update(args, callback){
+    let query = null, column = null;
+    switch(args.type){
+        case 'us': query = { name: 'update-us',
+                             text: 'UPDATE user_stories SET (feature, logs) = ($1,$2) WHERE id=$3 AND project=$4',
+                             values: [args.data.feature, args.data.logs, args.data.id, args.data.project]
+                         }; column="user_stories"; break;
+        default: break;
+    }
+    client.query(query, (err, res) => {
+        if(err){
+            callback(err);
+        }
+        callback(null);
+    });
 }
 
 ipcMain.on("create", (event, args) => {
-    let ret = null;
     let obj = {data: args['data'],
                kind: args['type'],
                err: null};
@@ -104,13 +158,21 @@ ipcMain.on("fetch", (event, args) => {
 });
 
 ipcMain.on('update', (event, args) => {
-    send_update(args);
+    send_update(args, res => {
+        if(typeof res === 'Error'){
+            let obj = {data: args['data'],
+                       kind: args['type'],
+                       err: res};
+            event.sender.send('error', obj);
+        }
+    });
 });
 
 client.on('error', (err) => {
     switch(err.code){
         case "57P01":
             dialog.showMessageBox({
+                title: "Scrum Assistant",
                 type: 'error',
                 buttons: ['Ok'],
                 message: 'Connection with server interrupted. The application will quit.',
@@ -141,7 +203,7 @@ module.exports = {
     },
 
     init_realtime: function(){
-        client.query("LISTEN rowchange; LISTEN rowdelete", (err,res) => {
+        client.query("LISTEN insert; LISTEN update; LISTEN delete", (err,res) => {
             if(err){
                 return err;
             }
@@ -149,8 +211,9 @@ module.exports = {
         client.on("notification", (data) => {
             let item = JSON.parse(data.payload);
             let type = String(Object.keys(item[0])[0]);
-            update_data(item, type, data.channel);
-            channel_send.send("update", {type: type});
+            dispatch_action(item, type, data.channel, ()=>{
+                channel_send.send(data.channel, {type: type, data:item[0][type]});
+            });
         });
         return null;
     },

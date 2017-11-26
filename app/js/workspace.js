@@ -1,5 +1,6 @@
 const {ipcRenderer} = require('electron');
 const remote = require('electron').remote;
+const {dialog} = remote.require('electron');
 let project_id = remote.getGlobal('data').current.id;
 
 function switch_tab(source){

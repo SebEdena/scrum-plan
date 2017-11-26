@@ -1,10 +1,13 @@
+DROP TRIGGER IF EXISTS created_projects_trigger ON projects CASCADE;
 DROP TRIGGER IF EXISTS updated_projects_trigger ON projects CASCADE;
 DROP TRIGGER IF EXISTS deleted_projects_trigger ON projects CASCADE;
+DROP TRIGGER IF EXISTS created_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS updated_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS deleted_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS pick_us_number ON user_stories CASCADE;
 DROP FUNCTION IF EXISTS us_inc CASCADE;
-DROP FUNCTION IF EXISTS notify_change CASCADE;
+DROP FUNCTION IF EXISTS notify_create CASCADE;
+DROP FUNCTION IF EXISTS notify_update CASCADE;
 DROP FUNCTION IF EXISTS notify_delete CASCADE;
 DROP TABLE IF EXISTS user_stories CASCADE;
 DROP TABLE IF EXISTS projects CASCADE;
@@ -35,11 +38,22 @@ $$
 $$
 LANGUAGE plpgsql VOLATILE;
 
-CREATE OR REPLACE FUNCTION notify_change() RETURNS trigger
+CREATE OR REPLACE FUNCTION notify_create() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM pg_notify('rowchange', format('[{"%s": %s}]', TG_TABLE_NAME, row_to_json(NEW)::text));
+    RAISE NOTICE 'notify change has been fired';
+    PERFORM pg_notify('insert', format('[{"%s": %s}]', TG_TABLE_NAME, row_to_json(NEW)::text));
+    RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION notify_update() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    RAISE NOTICE 'update triggered';
+    PERFORM pg_notify('update', format('[{"%s": %s}]', TG_TABLE_NAME, row_to_json(NEW)::text));
     RETURN NULL;
 END;
 $$;
@@ -48,18 +62,22 @@ CREATE OR REPLACE FUNCTION notify_delete() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    PERFORM pg_notify('rowdelete', format('[{"%s": %s}]', TG_TABLE_NAME, row_to_json(OLD)::text));
+    PERFORM pg_notify('delete', format('[{"%s": %s}]', TG_TABLE_NAME, row_to_json(OLD)::text));
     RETURN NULL;
 END;
 $$;
 
-CREATE TRIGGER updated_projects_trigger AFTER INSERT OR UPDATE ON projects
-FOR EACH ROW EXECUTE PROCEDURE notify_change();
+CREATE TRIGGER created_projects_trigger AFTER INSERT ON projects
+FOR EACH ROW EXECUTE PROCEDURE notify_create();
+CREATE TRIGGER updated_projects_trigger AFTER UPDATE ON projects
+FOR EACH ROW EXECUTE PROCEDURE notify_update();
 CREATE TRIGGER deleted_projects_trigger AFTER DELETE ON projects
 FOR EACH ROW EXECUTE PROCEDURE notify_delete();
 
-CREATE TRIGGER updated_user_stories_trigger AFTER INSERT OR UPDATE ON user_stories
-FOR EACH ROW EXECUTE PROCEDURE notify_change();
+CREATE TRIGGER created_user_stories_trigger AFTER INSERT ON user_stories
+FOR EACH ROW EXECUTE PROCEDURE notify_create();
+CREATE TRIGGER updated_user_stories_trigger AFTER UPDATE ON user_stories
+FOR EACH ROW EXECUTE PROCEDURE notify_update();
 CREATE TRIGGER deleted_user_stories_trigger AFTER DELETE ON user_stories
 FOR EACH ROW EXECUTE PROCEDURE notify_delete();
 

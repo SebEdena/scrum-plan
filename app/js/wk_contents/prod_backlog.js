@@ -1,4 +1,5 @@
 let tmp_us = [];
+const us_msg_limit = 50;
 ipcRenderer.send("fetch", {type:"user_stories"});
 
 ipcRenderer.on("load", (event, args) => {
@@ -9,15 +10,40 @@ ipcRenderer.on("load", (event, args) => {
 });
 
 ipcRenderer.on("created", (event, args) => {
-    if(args.kind === "us" && args.status === "ok"){
-        validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
-    }else{
-        console.log(args);
+    if(args.kind === "us"){
+        if(args.status === "ok"){
+            validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
+            let msg = {title: "Scrum Assistant", type: 'info',buttons: ['Ok']};
+            msg.message = 'The US \"' + ((args.data.feature.length <= us_msg_limit)?
+                    args.data.feature:(args.data.feature.substr(0, us_msg_limit - 1) + '\u2026'))+
+                    "\" has been created successfully !";
+            dialog.showMessageBox(msg);
+        }else{
+            let msg = {title: "Scrum Assistant", type: 'error', buttons: ['Retry','Cancel']};
+            msg.message = 'The US \"' + ((args.data.feature.length <= us_msg_limit)?
+            args.data.feature:(args.data.feature.substr(0, us_msg_limit - 1) + '\u2026\"'))+
+            " cannot be created.";
+            dialog.showMessageBox(msg, resp => {
+                if(resp === 0){
+                    $('#us_tmp'+args.data.tmp_ticket).find('form').trigger('submit');
+                }else{
+                    item.find('button').prop('disabled', false);
+                }
+            });
+        }
+    }
+});
+
+ipcRenderer.on('update', (event, args) => {
+    if(args.type === "user_stories"){
+        $("#us"+args.data.id).find('#feat_us').val(args.data.feature);
+        $("#us"+args.data.id).find('#desc_us').val(args.data.logs);
     }
 });
 
 $('#create_us').on('click', () => {
     if($('#us_new').length !== 0){
+        $('#us_new').find('input[name="feature"]').trigger('focus');
         return;
     }
     let html = `
@@ -70,10 +96,12 @@ function fill_us(){
         `;
         $("#features").append($(html));
         init_events($('#us' + us.id));
+        $('#us' + us.id).data('id', us.id);
     }
 }
 
 function init_create(item){
+    item.find('input[name="feature"]').trigger('focus');
     item.find('#del').on('click', () => {
         $(item).remove();
     });
@@ -83,8 +111,8 @@ function init_create(item){
     item.find("form").validate({
         submitHandler: (form) => {
             item.find('#ok').text('Edit').removeClass("btn-success").addClass("btn-secondary");
-            item.find('button').prop('disabled', true).off('click');
             item.find("input, textarea").prop("disabled", true);
+            item.find('button').prop('disabled', true);
             let index = push_tmp();
             item.prop('id', 'us_tmp' + index);
             let data = {
@@ -106,9 +134,9 @@ function init_events(item){
             item.remove();
         }else{
             for(let us of remote.getGlobal('data').user_stories){
-                if (us.id === item.prop('id').match(/\d+/)){
-                    item.find('form').feature.val(us.feature);
-                    item.find('form').description.val(us.logs);
+                if (us.id === item.data('id')){
+                    item.find('#feat_us').val(us.feature);
+                    item.find('#desc_us').val(us.logs);
                     break;
                 }
             }
@@ -125,6 +153,7 @@ function init_events(item){
         }else{
             item.find("input, textarea").prop("disabled", false);
             item.find('#ok').text('Ok');
+            item.find('#del').text('Cancel');
             item.find('#ok').removeClass('btn-secondary').addClass('btn-success');
         }
     });
@@ -136,7 +165,8 @@ function init_events(item){
             let data = {
                 feature: form.feature.value,
                 logs: form.description.value,
-                project: project_id
+                project: project_id,
+                id: item.data('id')
             };
             ipcRenderer.send("update", {type: "us", data: data});
         },
@@ -146,8 +176,12 @@ function init_events(item){
 
 function validate_us(item, data){
     pop_tmp(data.tmp_ticket);
+    item.detach().insertAfter($(".user_story").last());
+    item.data('id', data.id);
+    item.find('button').off('click');
     item.find('h4').text('User Story #' + data.id);
-    item.prop('id', 'us' + data.id);
+    item.prop('id', 'us' + data.id).removeClass('new_user_story').addClass('user_story');
+    item.find('form').data('validator').destroy();
     init_events(item);
     item.find('button').prop('disabled', false);
 }

@@ -1,5 +1,7 @@
 const {ipcRenderer} = require('electron');
+const remote = require('electron').remote;
 const notifier = require('node-notifier');
+
 let data = require('electron').remote.getGlobal("data");
 
 $("#open").on("click", function(){
@@ -23,12 +25,20 @@ $("#create_pj_form").on("submit", function(e){
     $("#modal_create_project").modal("hide");
 });
 
-ipcRenderer.on("update", (event, args) => {
+ipcRenderer.on("insert", (event, args) => {
+    console.log(args);
     switch (String(args['type'])){
         case "projects": load_projects();
             break;
         default:
             break;
+    }
+});
+
+ipcRenderer.on("update", (event, args) => {
+    console.log(args);
+    if(args.type === 'projects'){
+        update_project(args.data.id);
     }
 });
 
@@ -38,30 +48,42 @@ ipcRenderer.on("created", (event, args) => {
 });
 
 function load_projects(){
-    data = require('electron').remote.getGlobal("data");
+    data = remote.getGlobal("data");
     $("#html_open_project").html("");
     if (data['projects'].length !== 0){
         for (project of data['projects']){
             var div = $.parseHTML(`
-                <div class="row mt-3 project">
-                <div class="col-sm-9">
-                <div class="row"><h5>${project.title}</h5></div>
-                <div class="row offset-md-1">${project.description}</div>
-                </div>
+                <div class="row mt-3 project" id='pj${project.id}'>
+                    <div class="col-sm-9">
+                        <div class="row"><h5 id='title'>${project.title}</h5></div>
+                        <div class="row offset-md-1" id='desc'>${project.description}</div>
+                    </div>
                 <div class="col-sm-3 text-center"><a role="button" class="btn btn-success btn-sm">Open</a></div>
                 </div>
                 `);
-                $(div).data("project_id", project.id);
-                $("#html_open_project").append($(div));
+            $(div).find('a').data("project_id", project.id);
+            $("#html_open_project").append($(div));
 
-            $(div).find(".btn-success").on('click', function(){
+            $(div).find(".btn-success").on('click', (e) => {
                 $("#modal_open_project").modal("hide");
                 $("#create, #open").off("click");
-                ipcRenderer.send('open_project', {id:project.id});
+                ipcRenderer.send('open_project',{id:$(e.target).data("project_id")});
             });
         }
     }else{
         $("#html_open_project").append(`<h5>No project found.</h5>`);
+    }
+}
+
+function update_project(index){
+    let pjs = remote.getGlobal("data")['projects'];
+    for(let pj of pjs){
+        if(pj.id === index){
+            console.log($("#pj"+index));
+            $('#pj' + index).find('#title').text(pj.title);
+            $('#pj' + index).find('#desc').text(pj.description);
+            break;
+        }
     }
 }
 
