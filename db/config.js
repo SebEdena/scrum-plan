@@ -54,7 +54,9 @@ function dispatch_action(item, type, action, callback){
         }
     }
     if(action === "delete"){
-        delete_item(item, type);
+        delete_item(item, type, () => {
+            callback();
+        });
     }
 }
 
@@ -97,7 +99,7 @@ update_rules.partial.fct = (item, type, callback) => {
     }
 };
 
-function delete_item(item, type){
+function delete_item(item, type, callback){
     let del = null;
     for(let obj in global.data[type]){
         if(global.data[type][obj].id === item[0][type].id){
@@ -106,6 +108,7 @@ function delete_item(item, type){
         }
     }
     global.data[type].splice(del, 1);
+    callback();
 }
 
 function send_update(args, callback){
@@ -119,6 +122,24 @@ function send_update(args, callback){
     }
     client.query(query, (err, res) => {
         if(err){
+            callback(err);
+        }
+        callback(null);
+    });
+}
+
+function send_delete(args, callback){
+    let query = null, column = null;
+    switch(args.type){
+        case 'us': query = { name: 'delete-us',
+                             text: 'DELETE FROM user_stories WHERE id=$1 AND project=$2',
+                             values: [args.data.id, args.data.project]
+                         }; column="user_stories"; break;
+        default: break;
+    }
+    client.query(query, (err, res) => {
+        if(err){
+            console.log(err);
             callback(err);
         }
         callback(null);
@@ -161,8 +182,21 @@ ipcMain.on('update', (event, args) => {
     send_update(args, res => {
         if(typeof res === 'Error'){
             let obj = {data: args['data'],
+                       action: "update",
                        kind: args['type'],
                        err: res};
+            event.sender.send('error', obj);
+        }
+    });
+});
+
+ipcMain.on('delete', (event, args) => {
+    send_delete(args, res => {
+        if(typeof res === 'Error'){
+            let obj = {data: args['data'],
+            kind: args['type'],
+            action: "delete",
+            err: res};
             event.sender.send('error', obj);
         }
     });

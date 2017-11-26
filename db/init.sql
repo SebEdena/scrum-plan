@@ -42,7 +42,6 @@ CREATE OR REPLACE FUNCTION notify_create() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    RAISE NOTICE 'notify change has been fired';
     PERFORM pg_notify('insert', format('[{"%s": %s}]', TG_TABLE_NAME, row_to_json(NEW)::text));
     RETURN NULL;
 END;
