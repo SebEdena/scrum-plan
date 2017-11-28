@@ -19,6 +19,7 @@ let app = null;
 
 function create(type, data, callback){
     let query = null;
+    console.log(data.estimate);
     switch(type){
         case "project": query = {
                         name: "create-project",
@@ -28,8 +29,8 @@ function create(type, data, callback){
                         break;
         case "us": query = {
                       name: "create-user-story",
-                      text: "INSERT INTO user_stories (feature, logs, project) VALUES ($1, $2, $3) RETURNING user_stories.*",
-                      values: [data.feature, data.logs, data.project]
+                      text: "INSERT INTO user_stories (feature, logs, estimate, project) VALUES ($1, $2, $3, $4) RETURNING user_stories.*",
+                      values: [data.feature, data.logs, data.estimate, data.project]
                       };
                       break;
         default: break;
@@ -115,8 +116,8 @@ function send_update(args, callback){
     let query = null, column = null;
     switch(args.type){
         case 'us': query = { name: 'update-us',
-                             text: 'UPDATE user_stories SET (feature, logs) = ($1,$2) WHERE id=$3 AND project=$4',
-                             values: [args.data.feature, args.data.logs, args.data.id, args.data.project]
+                             text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
+                             values: [args.data.feature, args.data.logs, args.data.estimate, args.data.id, args.data.project]
                          }; column="user_stories"; break;
         default: break;
     }

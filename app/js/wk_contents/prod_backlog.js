@@ -4,7 +4,7 @@ ipcRenderer.send("fetch", {type:"user_stories"});
 
 ipcRenderer.on("load", (event, args) => {
     switch(args['type']){
-        case "user_stories": fill_us(); break;
+        case "user_stories": fill_all_us(); break;
         default: break;
     }
 });
@@ -34,8 +34,9 @@ ipcRenderer.on("created", (event, args) => {
 
 ipcRenderer.on('update', (event, args) => {
     if(args.type === "user_stories"){
-        $("#us"+args.data.id).find('#feat_us').val(args.data.feature);
-        $("#us"+args.data.id).find('#desc_us').val(args.data.logs);
+        $("#us"+args.data.id).find('#feat').val(args.data.feature);
+        $("#us"+args.data.id).find('#desc').val(args.data.logs);
+        $("#us"+args.data.id).find('#est').val(args.data.estimate);
         $('#us'+args.data.id).find("button").prop("disabled", false);
     }
 });
@@ -69,20 +70,28 @@ $('#create_us').on('click', () => {
     let html = `
         <div class="container new_user_story rounded" id="us_new">
             <div class="d-flex justify-content-between align-items-end">
-                    <div><h4>New User Story</h4></div>
-                    <div>
-                        <span class="btn-group">
-                            <button type="button" id="ok" class="btn btn-success">Ok</button>
-                            <button type="button" id="del" class="btn btn-danger">Delete</button>
-                        </span>
-                    </div>
+                <div><h4>New User Story</h4></div>
+                <div>
+                    <span class="btn-group">
+                        <button type="button" id="ok" class="btn btn-success">Ok</button>
+                        <button type="button" id="del" class="btn btn-danger">Delete</button>
+                    </span>
+                </div>
             </div>
             <form>
+                <div class="form-row">
+                    <div class="col-md-10">
+                        <label for="feat">Feature</label>
+                        <input type="text" class="form-control" id="feat" name="feature" placeholder="Enter story feature" maxlength="256" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="est">Estimate</label>
+                        <input type="number" class="form-control" id="est" name="estimate" maxlength="256" min="0" value="0" required>
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label for="feat_us">Feature</label>
-                    <input type="text" class="form-control" id="feat_us" name="feature" placeholder="Enter story feature" maxlength="256" required>
-                    <label class="pt-2" for="desc_us">Feature Logs</label>
-                    <textarea class="form-control mb-2" id="desc_us" name="description" rows="3" placeholder="Feature logs" maxlength="512"></textarea>
+                    <label class="pt-2" for="desc">Feature Logs</label>
+                    <textarea class="form-control mb-2" id="desc" name="description" rows="3" placeholder="Feature logs" maxlength="512"></textarea>
                 </div>
             </form>
         </div>
@@ -91,33 +100,45 @@ $('#create_us').on('click', () => {
     init_create($("#us_new"));
 });
 
-function fill_us(){
+function fill_all_us(){
     for(let us of remote.getGlobal('data').user_stories){
-        let html = `
-            <div class="container user_story rounded" id="us${us.id}">
-                <div class="d-flex justify-content-between align-items-end">
-                        <div><h4>User Story #${us.id}</h4></div>
-                        <div>
-                            <span class="btn-group">
-                                <button type="button" id="ok" class="btn btn-secondary">Edit</button>
-                                <button type="button" id="del" class="btn btn-danger">Delete</button>
-                            </span>
-                        </div>
-                </div>
-                <form>
-                    <div class="form-group">
-                        <label for="feat_us">Feature</label>
-                        <input type="text" class="form-control" id="feat_us" name="feature" value="${us.feature}" placeholder="Enter story feature" maxlength="256" required disabled>
-                        <label class="pt-2" for="desc_us">Feature Logs</label>
-                        <textarea class="form-control mb-2" id="desc_us" name="description" rows="3" placeholder="Feature logs" maxlength="512" disabled>${us.logs}</textarea>
-                    </div>
-                </form>
-            </div>
-        `;
-        $("#features").append($(html));
-        init_events($('#us' + us.id));
-        $('#us' + us.id).data('id', us.id);
+        fill_us(us);
     }
+}
+
+function fill_us(us){
+    let html = `
+        <div class="container user_story rounded" id="us${us.id}">
+            <div class="d-flex justify-content-between align-items-end">
+                <div><h4>User Story #${us.id}</h4></div>
+                <div>
+                    <span class="btn-group">
+                        <button type="button" id="ok" class="btn btn-secondary">Edit</button>
+                        <button type="button" id="del" class="btn btn-danger">Delete</button>
+                    </span>
+                </div>
+            </div>
+            <form>
+                <div class="form-row">
+                    <div class="col-md-10">
+                        <label for="feat">Feature</label>
+                        <input type="text" class="form-control" id="feat" name="feature" placeholder="Enter story feature" value="${us.feature}" maxlength="256" required disabled>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="est">Estimate</label>
+                        <input type="number" class="form-control" id="est" name="estimate" maxlength="256" min="0" value="${us.estimate}" required disabled>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="pt-2" for="desc">Feature Logs</label>
+                    <textarea class="form-control mb-2" id="desc" name="description" rows="3" placeholder="Feature logs" maxlength="512" disabled>${us.logs}</textarea>
+                </div>
+            </form>
+        </div>
+    `;
+    $("#features").append($(html));
+    init_events($('#us' + us.id));
+    $('#us' + us.id).data('id', us.id);
 }
 
 function init_create(item){
@@ -137,6 +158,7 @@ function init_create(item){
             let data = {
                 feature: form.feature.value,
                 logs: form.description.value,
+                estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
                 project: project_id,
                 tmp_ticket: index
             };
@@ -148,14 +170,13 @@ function init_create(item){
 
 function init_events(item){
     item.find('#del').on('click', () => {
-        console.log(item.find('#del').text());
         if(item.find('#del').text() === "Delete"){
             ask_delete(item, false);
         }else{
             for(let us of remote.getGlobal('data').user_stories){
                 if (us.id === item.data('id')){
-                    item.find('#feat_us').val(us.feature);
-                    item.find('#desc_us').val(us.logs);
+                    item.find('#feat').val(us.feature);
+                    item.find('#desc').val(us.logs);
                     break;
                 }
             }
@@ -182,6 +203,7 @@ function init_events(item){
             let data = {
                 feature: form.feature.value,
                 logs: form.description.value,
+                estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
                 project: project_id,
                 id: item.data('id')
             };
@@ -189,6 +211,20 @@ function init_events(item){
         },
         errorElement: "div"
     });
+}
+
+function insert_us(id, us){
+    for (let item of $(".user_story")){
+        if(id < item.data('id')){
+            us.detach().insertBefore(item);
+            return;
+        }
+    }
+    if($(".user_story").length > 0){
+        us.detach().insertAfter(item);
+    }else{
+        $("#features").append(us);
+    }
 }
 
 function validate_us(item, data){
@@ -232,7 +268,7 @@ function ask_delete(item, new_us){
                 item.remove();
             }else{
                 ipcRenderer.send('delete', {type: "us", data: {id:item.data('id'),
-                feature: item.find('feat_us').val(), project: project_id}});
+                feature: item.find('#feat').val(), project: project_id}});
             }
         }else{
             if(new_us){

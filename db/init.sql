@@ -21,8 +21,9 @@ CREATE TABLE projects(
 CREATE TABLE user_stories(
     id INTEGER NOT NULL,
     project INTEGER NOT NULL REFERENCES projects(id),
-    sprint INTEGER DEFAULT -1,
+    sprint INTEGER NOT NULL DEFAULT -1,
     feature VARCHAR(256) NOT NULL,
+    estimate NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (estimate >= 0),
     logs VARCHAR(512),
     PRIMARY KEY (project, id)
 );
