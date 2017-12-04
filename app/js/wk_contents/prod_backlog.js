@@ -12,7 +12,9 @@ ipcRenderer.on("load", (event, args) => {
 ipcRenderer.on("created", (event, args) => {
     if(args.kind === "us"){
         if(args.status === "ok"){
-            validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
+            if($('#us'+args.data.id).length === 0){
+                validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
+            }
             let msg = {title: "Scrum Assistant", type: 'info',buttons: ['Ok']};
             msg.message = 'The US #' + args.data.id+ ' : \"' + args.data.feature
                     + "\" has been created successfully !";
@@ -36,7 +38,7 @@ ipcRenderer.on('update', (event, args) => {
     if(args.type === "user_stories"){
         $("#us"+args.data.id).find('#feat').val(args.data.feature);
         $("#us"+args.data.id).find('#desc').val(args.data.logs);
-        $("#us"+args.data.id).find('#est').val(args.data.estimate);
+        $("#us"+args.data.id).find('#est').val(adjust_display(args.data.estimate));
         $('#us'+args.data.id).find("button").prop("disabled", false);
     }
 });
@@ -44,6 +46,16 @@ ipcRenderer.on('update', (event, args) => {
 ipcRenderer.on('delete', (event, args) => {
     if(args.type === "user_stories"){
         $('#us' + args.data.id).remove();
+    }
+});
+
+ipcRenderer.on('insert', (event, args) =>{
+    if(args.kind === "us" && $('#us'+args.data.id).length === 0){
+        if(args.status === "ok" ){
+            fill_us(args.data);
+        }else{
+            console.error(args.err.stack);
+        }
     }
 });
 
@@ -126,7 +138,7 @@ function fill_us(us){
                     </div>
                     <div class="col-md-2">
                         <label for="est">Estimate</label>
-                        <input type="number" class="form-control" id="est" name="estimate" maxlength="256" min="0" value="${us.estimate}" required disabled>
+                        <input type="number" class="form-control" id="est" name="estimate" maxlength="256" min="0" value="${adjust_display(us.estimate)}" required disabled>
                     </div>
                 </div>
                 <div class="form-group">
@@ -137,8 +149,9 @@ function fill_us(us){
         </div>
     `;
     $("#features").append($(html));
-    init_events($('#us' + us.id));
     $('#us' + us.id).data('id', us.id);
+    init_events($('#us' + us.id));
+    insert_us(us.id, $('#us' + us.id));
 }
 
 function init_create(item){
@@ -214,22 +227,21 @@ function init_events(item){
 }
 
 function insert_us(id, us){
-    for (let item of $(".user_story")){
-        if(id < item.data('id')){
-            us.detach().insertBefore(item);
+    let item = null;
+    for (item of $(".user_story:not(#us" + id + ")")){
+        if(id < $(item).data('id')){
+            us.detach().insertBefore($(item));
             return;
         }
     }
-    if($(".user_story").length > 0){
-        us.detach().insertAfter(item);
-    }else{
-        $("#features").append(us);
+    if($(".user_story:not(#us" + id + ")").length > 0){
+        us.detach().insertAfter($(".user_story:not(#us" + id + ")").last());
     }
 }
 
 function validate_us(item, data){
     pop_tmp(data.tmp_ticket);
-    item.detach().insertAfter($(".user_story").last());
+    insert_us(data.id, item);
     item.data('id', data.id);
     item.find('button').off('click');
     item.find('h4').text('User Story #' + data.id);
@@ -237,6 +249,7 @@ function validate_us(item, data){
     item.find('form').data('validator').destroy();
     init_events(item);
     item.find('button').prop('disabled', false);
+    item.find('#est').val(adjust_display(data.estimate));
 }
 
 function push_tmp(){
@@ -253,6 +266,10 @@ function push_tmp(){
 
 function pop_tmp(index){
     tmp_us[index] = false;
+}
+
+function adjust_display(data){
+    return parseFloat(data).toString();
 }
 
 function ask_delete(item, new_us){

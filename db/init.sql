@@ -24,7 +24,7 @@ CREATE TABLE user_stories(
     sprint INTEGER NOT NULL DEFAULT -1,
     feature VARCHAR(256) NOT NULL,
     estimate NUMERIC(10,2) NOT NULL DEFAULT 0 CHECK (estimate >= 0),
-    logs VARCHAR(512),
+    logs VARCHAR(512) DEFAULT '',
     PRIMARY KEY (project, id)
 );
 
