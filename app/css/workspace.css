@@ -16,6 +16,8 @@
 
 .tab-group {
     background-color: rgb(240, 240, 240) !important;
+    position: relative;
+    z-index: 100;
 }
 
 .tab-item {
@@ -28,4 +30,8 @@
 
 .user_story, .new_user_story{
     background-color: rgb(232, 232, 232);
+}
+
+.pane {
+    overflow: scroll;
 }

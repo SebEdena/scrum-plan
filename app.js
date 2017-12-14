@@ -14,7 +14,8 @@ app.on("ready", function(){
         width: 900,
         height: 700,
         title: "Scrum Assistant",
-        show: false
+        show: false,
+        backgroundColor: "#ede8e8"
     });
 
     mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');

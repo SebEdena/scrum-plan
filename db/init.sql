@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS projects CASCADE;
 CREATE TABLE projects(
     id SERIAL NOT NULL PRIMARY KEY,
     title VARCHAR(128) NOT NULL,
-    description VARCHAR(256)
+    description VARCHAR(256) DEFAULT ''
 );
 
 CREATE TABLE user_stories(
