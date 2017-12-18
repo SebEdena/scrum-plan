@@ -7,7 +7,7 @@ let db = require('./db/config.js');
 
 let mainWindow = null;
 let ready = false;
-global.data = {projects: [], current: null, user_stories: []};
+global.data = {projects: {}, current: null, user_stories: {}};
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
@@ -39,10 +39,7 @@ function connect(){
         },
         function(cb){
             cb(db.init_realtime());
-        },
-        function(cb){
-            cb(db.fetch("projects"));
-        },
+        }
     ], function (err, result) {
         if(err){
             mainWindow.webContents.send('error', {type: "connection", err: err});

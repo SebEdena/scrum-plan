@@ -52,7 +52,6 @@ CREATE OR REPLACE FUNCTION notify_update() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
-    RAISE NOTICE 'update triggered';
     PERFORM pg_notify('update', format('[{"%s": %s}]', TG_TABLE_NAME, row_to_json(NEW)::text));
     RETURN NULL;
 END;

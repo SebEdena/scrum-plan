@@ -115,8 +115,9 @@ $(document).ready(($)=>{
     });
 
     function fill_all_us(){
-        for(let us of remote.getGlobal('data').user_stories){
-            fill_us(us);
+        let us = remote.getGlobal('data').user_stories;
+        for(let i in us){
+            fill_us(us[i]);
         }
     }
 
@@ -188,10 +189,11 @@ $(document).ready(($)=>{
             if(item.find('#del').text() === "Delete"){
                 ask_delete(item, false);
             }else{
-                for(let us of remote.getGlobal('data').user_stories){
-                    if (us.id === item.data('id')){
-                        item.find('#feat').val(us.feature);
-                        item.find('#desc').val(us.logs);
+                let us = remote.getGlobal('data').user_stories;
+                for(let i in us){
+                    if (us[i].id === item.data('id')){
+                        item.find('#feat').val(us[i].feature);
+                        item.find('#desc').val(us[i].logs);
                         break;
                     }
                 }

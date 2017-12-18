@@ -2,8 +2,8 @@
 const pg = require('pg');
 const {ipcMain, dialog} = require('electron');
 
-let update_rules = {full:{types:['projects']},
-                    partial:{types:['user_stories']}};
+let update_rules = {full:{types:['projects', 'user_stories']},
+                    partial:{types:[]}};
 
 let client = new pg.Client({
     user: "scrum_user",
@@ -19,12 +19,11 @@ let app = null;
 
 function create(type, data, callback){
     let query = null;
-    console.log(data.estimate);
     switch(type){
         case "project": query = {
                         name: "create-project",
                         text: "INSERT INTO projects(title, description) VALUES ($1, $2) RETURNING projects.*",
-                        values: [data.name, data.description]
+                        values: [data.title, data.description]
                         };
                         break;
         case "us": query = {
@@ -37,9 +36,10 @@ function create(type, data, callback){
     }
     client.query(query, (err, res) => {
         if(err){
-            return callback(err);
+            console.error(err);
+            callback(err); return;
         }
-        return callback(res.rows[0]);
+        callback(res.rows[0]);
     });
 }
 
@@ -62,22 +62,8 @@ function dispatch_action(item, type, action, callback){
 }
 
 update_rules.full.fct = (item, type, callback) => {
-    let found = false;
-    for(let i in global.data[type]){
-        if(global.data[type][i].id === item[0][type].id){
-            for(let [key,value] of Object.entries(item[0][type])){
-                if(key !== 'id'){
-                    global.data[type][i][key] = value;
-                }
-            }
-            found = true;
-            callback();
-        }
-    }
-    if(!found){
-        global.data[type].push(item[0][type]);
-        callback();
-    }
+    global.data[type][item[0][type].id] = item[0][type];
+    callback();
 };
 
 update_rules.partial.fct = (item, type, callback) => {
@@ -140,7 +126,6 @@ function send_delete(args, callback){
     }
     client.query(query, (err, res) => {
         if(err){
-            console.log(err);
             callback(err);
         }
         callback(null);
@@ -176,7 +161,13 @@ ipcMain.on("open_project", (event, args)=>{
 });
 
 ipcMain.on("fetch", (event, args) => {
-    module.exports.fetch(args.type);
+    module.exports.fetch(args.type, (err) => {
+        if(typeof err === 'Error'){
+            console.error(err.stack);
+        }else{
+            channel_send.send("load", {type: args.type, ret: err});
+        }
+    });
 });
 
 ipcMain.on('update', (event, args) => {
@@ -224,6 +215,7 @@ module.exports = {
         view = front;
         channel_send = front.webContents;
         app = appli;
+        return null;
     },
 
     connect: function(){
@@ -253,7 +245,7 @@ module.exports = {
         return null;
     },
 
-    fetch: function(type){
+    fetch: function(type, cb){
         let query = null;
         switch (type) {
             case "projects": query = {
@@ -272,11 +264,12 @@ module.exports = {
         if(query){
             client.query(query, (err, res) => {
                 if(err){
-                    return err;
+                    cb(err);
                 } else {
-                    global.data[type] = JSON.parse(JSON.stringify(res.rows));
-                    channel_send.send("load", {type: type});
-                    return null;
+                    for(let obj of res.rows){
+                        global.data[type][obj.id] = obj;
+                    }
+                    cb(null);
                 }
             });
         }
