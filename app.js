@@ -1,12 +1,12 @@
 'use strict';
 
-const {app, globalShortcut, ipcMain} = require('electron');
+const {app, globalShortcut, ipcMain, dialog} = require('electron');
 const BrowserWindow = require("electron").BrowserWindow;
 const async = require('async');
 let db = require('./db/config.js');
 
 let mainWindow = null;
-let ready = false;
+let ready = false, displayed = false;
 global.data = {projects: {}, current: null, user_stories: {}};
 
 app.on("ready", function(){
@@ -18,15 +18,21 @@ app.on("ready", function(){
         backgroundColor: "#ede8e8"
     });
 
-    mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
-
-    mainWindow.on("ready-to-show", () => {
-        mainWindow.show();
+    db.verify_credentials((err)=>{
+        if(err){
+            dialog.showMessageBox({title: 'Scrum Assistant',
+                type: 'error',
+                message: 'An error with database credentials occured : ' + err.message,
+                buttons: ['Ok']}, resp=>{app.exit()});
+        }else{
+            mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
+            mainWindow.webContents.once('dom-ready', ()=>{
+                mainWindow.show();
+                mainWindow.webContents.openDevTools({mode:"detach"});
+                connect();
+            });
+        }
     });
-
-    mainWindow.webContents.openDevTools({mode:"detach"});
-
-    connect();
 });
 
 function connect(){
@@ -40,7 +46,8 @@ function connect(){
         function(cb){
             cb(db.init_realtime());
         }
-    ], function (err, result) {
+    ], function (err) {
+        console.log(err);
         if(err){
             mainWindow.webContents.send('error', {type: "connection", err: err});
         }else{

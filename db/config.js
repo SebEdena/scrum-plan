@@ -1,21 +1,14 @@
 'use strict'
 const pg = require('pg');
+const fs = require('fs');
 const {ipcMain, dialog} = require('electron');
+const credentialsRules = {
+    properties: ['user', 'password', 'host', 'port', 'database']
+};
 
-let update_rules = {full:{types:['projects', 'user_stories']},
-                    partial:{types:[]}};
+let connectionSettings = null;
 
-let client = new pg.Client({
-    user: "scrum_user",
-    password: "b8aveK",
-    host: "localhost",
-    port: 5432,
-    database: "scrum"
-});
-
-let view = null;
-let channel_send = null;
-let app = null;
+let client = null, view = null, channel_send = null, app = null;
 
 function create(type, data, callback){
     let query = null;
@@ -45,14 +38,9 @@ function create(type, data, callback){
 
 function dispatch_action(item, type, action, callback){
     if(action === "insert" || action === "update"){
-        for(var method of Object.keys(update_rules)){
-            if(update_rules[method].types.indexOf(type) >= 0){
-                update_rules[method].fct(item, type, ()=>{
-                    callback();
-                });
-                break;
-            }
-        }
+        update_item(item, type, ()=>{
+            callback();
+        });
     }
     if(action === "delete"){
         delete_item(item, type, () => {
@@ -61,29 +49,9 @@ function dispatch_action(item, type, action, callback){
     }
 }
 
-update_rules.full.fct = (item, type, callback) => {
+function update_item(item, type, callback){
     global.data[type][item[0][type].id] = item[0][type];
     callback();
-};
-
-update_rules.partial.fct = (item, type, callback) => {
-    let change = {
-        "user_stories": ['feature', 'logs']
-    };
-    let found = false;
-    for(let obj of global.data[type]){
-        if(obj.id === item[0][type].id){
-            for(let cols of change[type]){
-                obj[cols] = item[0][type][cols];
-            }
-            found = true;
-            callback();
-        }
-    }
-    if(!found){
-        global.data[type].push(item[0][type]);
-        callback();
-    }
 };
 
 function delete_item(item, type, callback){
@@ -194,28 +162,53 @@ ipcMain.on('delete', (event, args) => {
     });
 });
 
-client.on('error', (err) => {
-    switch(err.code){
-        case "57P01":
-            dialog.showMessageBox({
-                title: "Scrum Assistant",
-                type: 'error',
-                buttons: ['Ok'],
-                message: 'Connection with server interrupted. The application will quit.',
-            }, resp => {
-            if (resp === 0) {
-                app.quit();
-            }
-        });
-    }
-});
+function init_client(callback){
+    client = new pg.Client(connectionSettings);
+    client.on('error', (err) => {
+        switch(err.code){
+            case "57P01":
+                dialog.showMessageBox({
+                    title: "Scrum Assistant",
+                    type: 'error',
+                    buttons: ['Ok'],
+                    message: 'Connection with server interrupted. The application will quit.',
+                }, resp => {
+                if (resp === 0) {
+                    app.quit();
+                }
+            });
+        }
+    });
+    callback(null);
+}
 
 module.exports = {
+    verify_credentials: function(callback){
+        fs.readFile('./db/settings.json', (err, data) => {
+            if (err) callback(err);
+            try{
+                connectionSettings = JSON.parse(data);
+                for(let property of credentialsRules.properties){
+                    if(!connectionSettings.hasOwnProperty(property)){
+                        callback(new Error('Missing credential property \"'+property+'\"'));
+                        return;
+                    }
+                }
+                callback(null);
+            }catch(err){
+                console.error(err);
+                callback(err);
+            }
+        });
+    },
+
     init: function(front, appli){
         view = front;
         channel_send = front.webContents;
         app = appli;
-        return null;
+        init_client((err)=>{
+            return null;
+        });
     },
 
     connect: function(){
@@ -225,8 +218,8 @@ module.exports = {
                 return err;
             }
             nok = null;
+            return null;
         });
-        return null;
     },
 
     init_realtime: function(){
