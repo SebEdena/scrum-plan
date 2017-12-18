@@ -23,7 +23,7 @@ app.on("ready", function(){
             dialog.showMessageBox({title: 'Scrum Assistant',
                 type: 'error',
                 message: 'An error with database credentials occured : ' + err.message,
-                buttons: ['Ok']}, resp=>{app.exit()});
+                buttons: ['Ok']}, resp=>{app.quit()});
         }else{
             mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
             mainWindow.webContents.once('dom-ready', ()=>{
@@ -64,11 +64,15 @@ ipcMain.on("action", (event, args) => {
             break;
         case "reconnect": connect();
             break;
-        case "quit": app.exit();
+        case "quit": app.quit();
             break;
         default: break;
     }
 })
+
+app.once('will-quit', ()=>{
+    db.disconnect();
+});
 
 // process.on('uncaughtException', function(err){
 //     console.error(err);

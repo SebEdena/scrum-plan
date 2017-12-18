@@ -2,6 +2,7 @@
 const pg = require('pg');
 const fs = require('fs');
 const {ipcMain, dialog} = require('electron');
+const connPath = './db/settings_bis.json';
 const credentialsRules = {
     properties: ['user', 'password', 'host', 'port', 'database']
 };
@@ -184,7 +185,7 @@ function init_client(callback){
 
 module.exports = {
     verify_credentials: function(callback){
-        fs.readFile('./db/settings.json', (err, data) => {
+        fs.readFile(connPath, (err, data) => {
             if (err) callback(err);
             try{
                 connectionSettings = JSON.parse(data);
@@ -266,6 +267,10 @@ module.exports = {
                 }
             });
         }
+    },
+
+    disconnect: function(){
+        client.end((err) => {});
     }
 };
 
