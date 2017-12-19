@@ -7,7 +7,11 @@ let db = require('./db/config.js');
 
 let mainWindow = null;
 let ready = false, displayed = false;
-global.data = {projects: {}, current: null, user_stories: {}};
+global.data = {projects: {},
+               current: null,
+               user_stories: {},
+               sprints: {}
+              };
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
@@ -27,8 +31,8 @@ app.on("ready", function(){
         }else{
             mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
             mainWindow.webContents.once('dom-ready', ()=>{
-                mainWindow.show();
                 mainWindow.webContents.openDevTools({mode:"detach"});
+                mainWindow.show();
                 connect();
             });
         }

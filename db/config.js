@@ -1,8 +1,8 @@
-'use strict'
+'use strict';
 const pg = require('pg');
 const fs = require('fs');
 const {ipcMain, dialog} = require('electron');
-const connPath = './db/settings_bis.json';
+const connPath = './db/settings_offline.json';
 const credentialsRules = {
     properties: ['user', 'password', 'host', 'port', 'database']
 };

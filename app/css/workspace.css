@@ -28,10 +28,6 @@
     background-color: #cfcccc !important;
 }
 
-.user_story, .new_user_story{
-    background-color: rgb(232, 232, 232);
-}
-
 .pane {
-    overflow: scroll;
+    overflow-y: scroll;
 }

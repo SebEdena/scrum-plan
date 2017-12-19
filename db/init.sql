@@ -5,10 +5,10 @@ DROP TRIGGER IF EXISTS created_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS updated_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS deleted_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS pick_us_number ON user_stories CASCADE;
-DROP FUNCTION IF EXISTS us_inc CASCADE;
-DROP FUNCTION IF EXISTS notify_create CASCADE;
-DROP FUNCTION IF EXISTS notify_update CASCADE;
-DROP FUNCTION IF EXISTS notify_delete CASCADE;
+DROP FUNCTION IF EXISTS us_inc() CASCADE;
+DROP FUNCTION IF EXISTS notify_create() CASCADE;
+DROP FUNCTION IF EXISTS notify_update() CASCADE;
+DROP FUNCTION IF EXISTS notify_delete() CASCADE;
 DROP TABLE IF EXISTS user_stories CASCADE;
 DROP TABLE IF EXISTS projects CASCADE;
 
@@ -87,8 +87,3 @@ INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda enigne
 
 INSERT INTO user_stories (feature, logs, project) VALUES ('Create Engine Block', 'Get help from Mercedes maybe', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
 INSERT INTO user_stories (feature, logs, project) VALUES ('Add Turbo', 'Reliable please !', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
-
-GRANT CONNECT ON DATABASE scrum to scrum_user;
-GRANT USAGE ON SCHEMA public to scrum_user;
-GRANT SELECT, INSERT, UPDATE, DELETE on ALL TABLES IN SCHEMA public to scrum_user;
-GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public to scrum_user;
