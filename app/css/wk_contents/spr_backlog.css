@@ -1,6 +1,6 @@
 .spr_user_story{
     background-color: rgb(232, 232, 232);
-    border: 2px solid rgb(208, 208, 208);
+    border: 2px solid rgb(180, 180, 180);
     -webkit-transition: background-color 0.5s;
 }
 
@@ -13,19 +13,19 @@
     margin: 0;
 }
 
-#spr_us{
+.spr_us_container{
+    min-height: 20px;
+    font-size: 1.1rem;
     padding: 2px;
-    background-color: rgb(208, 208, 208);
+    background-color: rgb(180, 180, 180);
 }
 
-@media screen and (min-width: 1150px) and (max-width: 1400){
+@media screen and (min-width: 1400px){
     .spr_user_story p{
         font-size: 1.4rem;
     }
-}
 
-@media screen and (min-width: 1401px){
-    .spr_user_story p{
-        font-size: 1.4rem;
+    .spr_us_container{
+        font-size: 1.2rem;
     }
 }

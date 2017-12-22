@@ -1,16 +1,16 @@
 const {ipcRenderer} = require('electron');
 const remote = require('electron').remote;
 const {dialog} = remote.require('electron');
-// const notifier = require('node-notifier');
-// const WindowsToaster = notifier.WindowsToaster;
 
 $(document).ready(($)=>{
     ipcRenderer.send("fetch", {type:"projects"});
 
-    ipcRenderer.on("load", (event, args) => {
-        switch(args['type']){
-            case "projects": load_projects(); break;
-            default: break;
+    ipcRenderer.on("fetched", (event, args) => {
+        if(!args.ret){
+            switch(args['type']){
+                case "projects": load_projects(); break;
+                default: break;
+            }
         }
     });
 

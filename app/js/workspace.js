@@ -3,8 +3,18 @@ const remote = require('electron').remote;
 const {dialog} = remote.require('electron');
 let project_id = remote.getGlobal('data').current.id;
 let scroll_state = {};
+let asked_fetch = {};
 
 $(document).ready(($) => {
+    ipcRenderer.send("load", {type:"user_stories"});
+    // ipcRenderer.send("load", {type:"user_stories"});
+
+    ipcRenderer.on("loaded", (event, args) => {
+        if(args.ret){
+            console.error("Cannot load " + args.type);
+        }
+    });
+
     function switch_tab(source){
       if($(source).prop("id") === $(".nav-group-item.active").prop("id") &&
           $(".tab-item").length !== 0){
@@ -40,6 +50,7 @@ $(document).ready(($) => {
         if($(".content-page[id="+$(elt).prop('id')+"]").length === 0){
             $.get('../html/wk_contents/' + $(elt).prop('id') + '.html', (data)=>{
                 $(".content").append(data);
+                asked_fetch[$(elt).prop('id')] = [];
                 scroll_state[$(elt).prop('id')] = 0;
             });
         }

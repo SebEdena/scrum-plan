@@ -1,13 +1,45 @@
 <div class='content-page container-fluid' id='spr_backlog'>
     <h1>Sprint backlogs</h1>
     <div class='row'>
-        <div class="col-6" id='spr_us_container'>
+        <div class="col-6">
             <h3>User Stories</h3>
-            <div class="container-fluid d-flex flex-wrap" id="spr_us">
+            <div class="container-fluid d-flex flex-wrap spr_us_container" id="spr_us">
             </div>
         </div>
-        <div class="col-6" id="spr_container">
+        <div class="col-6">
             <h3>Sprints</h3>
+            <div id="accordion" role="tablist">
+                <div class="card" id="spr_0">
+                    <div class="card-header" role="tab" id="h0">
+                        <h3 class="m-0">
+                            <a data-toggle="collapse" href="#c0" aria-expanded="true" aria-controls="c0">
+                                Sprint #0
+                            </a>
+                        </h3>
+                    </div>
+                    <div id="c0" class="collapse" role="tabpanel" aria-labelledby="h0">
+                        <div class="card-body">
+                            <div class="container-fluid d-flex flex-wrap spr_us_container">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" id="spr_1">
+                    <div class="card-header" role="tab" id="h1">
+                        <h3 class="m-0">
+                            <a data-toggle="collapse" href="#c1" aria-expanded="true" aria-controls="c1">
+                                Sprint #1
+                            </a>
+                        </h3>
+                    </div>
+                    <div id="c1" class="collapse" role="tabpanel" aria-labelledby="h1">
+                        <div class="card-body">
+                            <div class="container-fluid d-flex flex-wrap spr_us_container">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script type="text/javascript" src="../js/wk_contents/spr_backlog.js"></script>

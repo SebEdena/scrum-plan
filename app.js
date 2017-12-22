@@ -7,11 +7,17 @@ let db = require('./db/config.js');
 
 let mainWindow = null;
 let ready = false, displayed = false;
-global.data = {projects: {},
-               current: null,
-               user_stories: {},
-               sprints: {}
-              };
+global.data = {
+    projects: {},
+    current: null,
+    user_stories: {},
+    sprints: {}
+};
+global.loaded = {
+    projects: false,
+    user_stories: false,
+    sprints: false
+};
 
 app.on("ready", function(){
     mainWindow = new BrowserWindow({

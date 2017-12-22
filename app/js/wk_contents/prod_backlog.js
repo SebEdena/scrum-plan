@@ -4,10 +4,13 @@ const us_msg_limit = 50;
 $(document).ready(($)=>{
     ipcRenderer.send("fetch", {type:"user_stories"});
 
-    ipcRenderer.on("load", (event, args) => {
-        switch(args['type']){
-            case "user_stories": fill_all_us(); break;
-            default: break;
+    ipcRenderer.on("fetched", (event, args) => {
+        if(!(args.ret || ~asked_fetch['prod_backlog'].indexOf(args.type))){
+            switch(args['type']){
+                case "user_stories": fill_all_us(); break;
+                default: break;
+            }
+            asked_fetch['prod_backlog'].push(args.type);
         }
     });
 

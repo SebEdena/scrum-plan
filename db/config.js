@@ -11,6 +11,66 @@ let connectionSettings = null;
 
 let client = null, view = null, channel_send = null, app = null;
 
+function init_client(callback){
+    client = new pg.Client(connectionSettings);
+    client.on('error', (err) => {
+        switch(err.code){
+            case "57P01":
+                dialog.showMessageBox({
+                    title: "Scrum Assistant",
+                    type: 'error',
+                    buttons: ['Ok'],
+                    message: 'Connection with server interrupted. The application will quit.',
+                }, resp => {
+                if (resp === 0) {
+                    app.quit();
+                }
+            });
+        }
+    });
+    callback(null);
+}
+
+function fetch(type, cb){
+    if(!global.loaded[type]){
+        load(type, (err)=>{
+            cb(err);
+        });
+    }else{
+        cb(null);
+    }
+}
+
+function load(type, cb){
+    let query = null;
+    switch (type) {
+        case "projects": query = {
+                            name: 'fetch-projects',
+                            text: 'SELECT * FROM projects p ORDER BY p.id'
+                         };
+                         break;
+        case "user_stories": query = {
+                                    name: 'fetch-all-user-stories',
+                                    text: 'SELECT us.* FROM user_stories us WHERE us.project=$1 ORDER BY us.id',
+                                    values: [global.data.current.id]
+                             };
+                             break;
+        default: break;
+    }
+    if(query){
+        client.query(query, (err, res) => {
+            if(err){
+                cb(err);
+            } else {
+                for(let obj of res.rows){
+                    global.data[type][obj.id] = obj;
+                }
+                cb(null);
+            }
+        });
+    }
+}
+
 function create(type, data, callback){
     let query = null;
     switch(type){
@@ -130,12 +190,14 @@ ipcMain.on("open_project", (event, args)=>{
 });
 
 ipcMain.on("fetch", (event, args) => {
-    module.exports.fetch(args.type, (err) => {
-        if(typeof err === 'Error'){
-            console.error(err.stack);
-        }else{
-            channel_send.send("load", {type: args.type, ret: err});
-        }
+    fetch(args.type, (err) => {
+        channel_send.send("fetched", {type: args.type, ret: err});
+    });
+});
+
+ipcMain.on("load", (event, args) => {
+    load(args.type, (err) => {
+        channel_send.send("loaded", {type: args.type, ret: err});
     });
 });
 
@@ -163,26 +225,6 @@ ipcMain.on('delete', (event, args) => {
     });
 });
 
-function init_client(callback){
-    client = new pg.Client(connectionSettings);
-    client.on('error', (err) => {
-        switch(err.code){
-            case "57P01":
-                dialog.showMessageBox({
-                    title: "Scrum Assistant",
-                    type: 'error',
-                    buttons: ['Ok'],
-                    message: 'Connection with server interrupted. The application will quit.',
-                }, resp => {
-                if (resp === 0) {
-                    app.quit();
-                }
-            });
-        }
-    });
-    callback(null);
-}
-
 module.exports = {
     verify_credentials: function(callback){
         fs.readFile(connPath, (err, data) => {
@@ -197,7 +239,6 @@ module.exports = {
                 }
                 callback(null);
             }catch(err){
-                console.error(err);
                 callback(err);
             }
         });
@@ -237,36 +278,6 @@ module.exports = {
             });
         });
         return null;
-    },
-
-    fetch: function(type, cb){
-        let query = null;
-        switch (type) {
-            case "projects": query = {
-                                name: 'fetch-projects',
-                                text: 'SELECT * FROM projects p ORDER BY p.id'
-                             };
-                             break;
-            case "user_stories": query = {
-                                        name: 'fetch-all-user-stories',
-                                        text: 'SELECT us.* FROM user_stories us WHERE us.project=$1 ORDER BY us.id',
-                                        values: [global.data.current.id]
-                                 };
-                                 break;
-            default: break;
-        }
-        if(query){
-            client.query(query, (err, res) => {
-                if(err){
-                    cb(err);
-                } else {
-                    for(let obj of res.rows){
-                        global.data[type][obj.id] = obj;
-                    }
-                    cb(null);
-                }
-            });
-        }
     },
 
     disconnect: function(){
