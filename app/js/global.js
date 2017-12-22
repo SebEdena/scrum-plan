@@ -8,7 +8,7 @@ function showModal(elementId) {
     } else {
         $("#" + elementId).modal("show");
     }
-};
+}
 
 function hideModal(elementId) {
     hideInProgress = true;
@@ -23,4 +23,8 @@ function hideModal(elementId) {
         showModalId = '';
         $("#" + elementId).off('hidden.bs.modal');
     }
-};
+}
+
+function adjust_display(data){
+    return parseFloat(data).toString().replace(',', '.');
+}

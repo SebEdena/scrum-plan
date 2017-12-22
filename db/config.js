@@ -112,7 +112,7 @@ function dispatch_action(item, type, action, callback){
 
 function update_item(item, type, callback){
     global.data[type][item[0][type].id] = item[0][type];
-    callback();
+    callback(null);
 };
 
 function delete_item(item, type, callback){

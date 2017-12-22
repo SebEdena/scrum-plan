@@ -57,7 +57,6 @@ function connect(){
             cb(db.init_realtime());
         }
     ], function (err) {
-        console.log(err);
         if(err){
             mainWindow.webContents.send('error', {type: "connection", err: err});
         }else{

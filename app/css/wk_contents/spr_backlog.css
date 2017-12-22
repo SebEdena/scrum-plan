@@ -15,7 +15,6 @@
 
 .spr_us_container{
     min-height: 20px;
-    font-size: 1.1rem;
     padding: 2px;
     background-color: rgb(180, 180, 180);
 }
@@ -24,8 +23,10 @@
     .spr_user_story p{
         font-size: 1.4rem;
     }
+}
 
-    .spr_us_container{
-        font-size: 1.2rem;
+@media screen and (max-width: 1399px){
+    .pj_spr a, .pj_spr h3{
+        font-size:  1rem;
     }
 }

@@ -56,7 +56,7 @@ $(document).ready(($)=>{
 
     ipcRenderer.on('insert', (event, args) =>{
         if(args.kind === "us" && $('#us'+args.data.id).length === 0){
-            if(args.status === "ok" ){
+            if(args.status === "ok"){
                 fill_us(args.data);
             }else{
                 console.error(args.err.stack);
@@ -197,6 +197,7 @@ $(document).ready(($)=>{
                     if (us[i].id === item.data('id')){
                         item.find('#feat').val(us[i].feature);
                         item.find('#desc').val(us[i].logs);
+                        item.find('#est').val(us[i].estimate);
                         break;
                     }
                 }
@@ -272,10 +273,6 @@ $(document).ready(($)=>{
 
     function pop_tmp(index){
         tmp_us[index] = false;
-    }
-
-    function adjust_display(data){
-        return parseFloat(data).toString();
     }
 
     function ask_delete(item, new_us){
