@@ -55,6 +55,11 @@ function load(type, cb){
                                     values: [global.data.current.id]
                              };
                              break;
+        case "sprints": query = {
+                            name: 'fetch-all-sprints',
+                            text: 'SELECT sp.* FROM sprints sp WHERE sp.project=$1 ORDER BY sp.id',
+                            values: [global.data.current.id]
+                        };
         default: break;
     }
     if(query){

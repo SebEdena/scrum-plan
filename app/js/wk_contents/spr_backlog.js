@@ -1,21 +1,17 @@
 let drake = null;
 
 $(document).ready(($)=>{
-    $('#spr_0').data('spr_id', 0);
-    $('#spr_0').data('total', 6);
-    $('#spr_0').data('pt_left', 6);
-
     ipcRenderer.send("fetch", {type:"user_stories"});
-    // ipcRenderer.send("fetch", {type:"sprints"});
 
     ipcRenderer.on("fetched", (event, args) => {
         if(!(args.ret || ~asked_fetch['spr_backlog'].indexOf(args.type))){
             switch(args['type']){
-                case "user_stories": fill_all_sprint_us();
-                                     init_containers($('.spr_us_container'));
+                case "user_stories": ipcRenderer.send("fetch", {type:"sprints"});
                                      break;
-                // ipcRenderer.send("fetch", {type:"sprints"});
-                // case "sprints": DO SOMETHING; break;
+                case "sprints": fill_all_sprints();
+                                init_containers($('.spr_us_container'));
+                                fill_all_sprint_us();
+                                break;
                 default: break;
             }
             asked_fetch['spr_backlog'].push(args.type);
@@ -33,7 +29,8 @@ $(document).ready(($)=>{
         let html = `<div class="col-xl-6 spr_user_story d-flex flex-row justify-content-around rounded" id="spr_us${us.id}">
                         <p>US#${us.id} <small class="text-muted">Estimated: ${us.estimate}</small></p>
                     </div>`;
-        $("#spr_us").append($(html));
+        assign_us_to_sprint($(html), us.sprint);
+        // $("#spr_us").append($(html));
         $('#spr_us' + us.id).data('id', us.id);
         $('#spr_us' + us.id).data('estimate', us.estimate);
         $('#spr_us' + us.id).tooltip({
@@ -77,6 +74,10 @@ $(document).ready(($)=>{
                     </div>
                 </div>
             </div>`;
+        $('#sprints_container').append($(html));
+        $('#spr_'+sprint.id).data('spr_id', sprint.id);
+        $('#spr_'+sprint.id).data('total', sprint.points);
+        $('#spr_'+sprint.id).data('pt_left', sprint.points);
     }
 
     function init_containers(containers){
@@ -95,6 +96,10 @@ $(document).ready(($)=>{
         drake.on('drop', (el, target, source, sibling) => {
             update_points(el, target, source);
         });
+    }
+
+    function assign_us_to_sprint(item, sprint){
+        $("#spr_"+(parseInt(sprint)>=0?sprint:"us")).find('.spr_us_container').append(item);
     }
 
     function update_points(el, target, source){
