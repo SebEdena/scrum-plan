@@ -19,6 +19,8 @@ $(document).ready(($)=>{
             if(args.status === "ok"){
                 if($('#us'+args.data.id).length === 0){
                     validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
+                }else{
+                    $('#us_tmp'+args.data.tmp_ticket).remove();
                 }
                 let msg = {title: "Scrum Assistant", type: 'info',buttons: ['Ok']};
                 msg.message = 'The US #' + args.data.id+ ' : \"' + args.data.feature
@@ -55,12 +57,8 @@ $(document).ready(($)=>{
     });
 
     ipcRenderer.on('insert', (event, args) =>{
-        if(args.kind === "us" && $('#us'+args.data.id).length === 0){
-            if(args.status === "ok"){
-                fill_us(args.data);
-            }else{
-                console.error(args.err.stack);
-            }
+        if(args.type === "user_stories" && $('#us'+args.data.id).length === 0){
+            fill_us(args.data);
         }
     });
 

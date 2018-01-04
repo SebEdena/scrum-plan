@@ -91,11 +91,16 @@ function create(type, data, callback){
                       values: [data.feature, data.logs, data.estimate, data.project]
                       };
                       break;
+        case "sprint": query = {
+                        name: "create-sprint",
+                        text: "INSERT INTO sprints (project) VALUES ($1) RETURNING sprints.*",
+                        values: [data.project]
+                        };
+                        break;
         default: break;
     }
     client.query(query, (err, res) => {
         if(err){
-            console.error(err);
             callback(err); return;
         }
         callback(res.rows[0]);

@@ -18,6 +18,26 @@ $(document).ready(($)=>{
         }
     });
 
+    ipcRenderer.on('created', (event, args)=>{
+        if(args.err && args.kind === "sprint"){
+            dialog.showMessageBox({title: "Scrum Assistant",
+                                    type: 'error',
+                                    buttons: ['ok'],
+                                    message: "Unable to create a new sprint."},
+                                    (resp)=>{});
+        }
+    });
+
+    ipcRenderer.on('insert', (event, args) =>{
+        if(args.type === "sprints"){
+            fill_sprint(args.data);
+        }
+    });
+
+    $('#create_sp').on('click', ()=>{
+        ipcRenderer.send('create', {type: "sprint", data:{project:project_id}});
+    });
+
     function fill_all_sprint_us(){
         let us = remote.getGlobal('data').user_stories;
         for(i in us){
@@ -29,14 +49,14 @@ $(document).ready(($)=>{
         let html = `<div class="col-xl-6 spr_user_story d-flex flex-row justify-content-around rounded" id="spr_us${us.id}">
                         <p>US#${us.id} <small class="text-muted">Estimated: ${us.estimate}</small></p>
                     </div>`;
-        assign_us_to_sprint($(html), us.sprint);
-        // $("#spr_us").append($(html));
+        $("#spr_us").append($(html));
         $('#spr_us' + us.id).data('id', us.id);
         $('#spr_us' + us.id).data('estimate', us.estimate);
         $('#spr_us' + us.id).tooltip({
             placement: 'top', // or bottom, left, right, and variations
             title: us.feature
         });
+        assign_us_to_sprint($('#spr_us'+us.id), us.sprint);
     }
 
     function fill_all_sprints(){
@@ -57,7 +77,7 @@ $(document).ready(($)=>{
                             </a>
                         </h3>
                         <h3 class="m-0 col-xl-4" id="left"></h3>
-                        <form class="form-inline m-0 col-xl-5 d-flex justify-content-e">
+                        <form class="form-inline m-0 col-xl-5 d-flex">
                             <label class="sr-only" for="total_pts">Total sprint points</label>
                             <div class="input-group col-lg-7">
                                 <!-- <div class="input-group-addon">Points</div> -->
@@ -99,7 +119,10 @@ $(document).ready(($)=>{
     }
 
     function assign_us_to_sprint(item, sprint){
-        $("#spr_"+(parseInt(sprint)>=0?sprint:"us")).find('.spr_us_container').append(item);
+        if(parseInt(sprint) >= 0){
+            $(item).detach().appendTo($("#spr_"+sprint).find('.spr_us_container'));
+            update_points(item, $("#spr_"+sprint).find('.spr_us_container'), "#spr_us");
+        }
     }
 
     function update_points(el, target, source){
