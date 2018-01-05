@@ -1,6 +1,8 @@
-let drake = null;
+let drake = null, del_sprints = [];
 
 $(document).ready(($)=>{
+    $("#spr_us").data('spr_id', -1);
+
     ipcRenderer.send("fetch", {type:"user_stories"});
 
     ipcRenderer.on("fetched", (event, args) => {
@@ -29,13 +31,51 @@ $(document).ready(($)=>{
     });
 
     ipcRenderer.on('insert', (event, args) =>{
-        if(args.type === "sprints"){
+        if(args.type === "sprints" && $("#spr_"+args.data.id).length === 0){
             fill_sprint(args.data);
         }
     });
 
+    ipcRenderer.on('delete', (event, args) =>{
+        if(args.type === "sprints"){
+            for(let us of $("#spr_"+args.data.id).find('.spr_user_story')){
+                assign_us_to_sprint($(us), -1, "#spr_"+args.data.id);
+            }
+            $("#spr_"+args.data.id).remove();
+        }
+    });
+
+    ipcRenderer.on('update', (event, args)=>{
+        if(args.type === "user_stories"){
+            if($('#spr_us'+args.data.id).length === 0){
+                fill_sprint_us(args.data);
+            }else{
+                let previous = $('#spr_us'+args.data.id).parents().closest(".pj_spr");
+                if(previous.data('spr_id') !== args.data.sprint){
+                    assign_us_to_sprint($('#spr_us'+args.data.id), args.data.sprint, "#"+previous.attr('id'));
+                }
+            }
+            $('#spr_us'+args.data.id).html(`<p>US#${args.data.id} <small class="text-muted">Estimated: ${args.data.estimate}</small></p>`);
+            $('#spr_us' + args.data.id).tooltip('dispose').tooltip({
+                placement: 'top', // or bottom, left, right, and variations
+                title: args.data.feature
+            });
+        }
+    });
+
+    ipcRenderer.on('error', (event, args) =>{
+        console.error(args.err);
+    })
+
     $('#create_sp').on('click', ()=>{
         ipcRenderer.send('create', {type: "sprint", data:{project:project_id}});
+    });
+
+    $('#delete_sp').on('click', ()=>{
+        let items = $(".pj_spr:not(#spr_us)");
+        if(items.length !== 0){
+            ipcRenderer.send('delete', {type: "sprint", data:{project:project_id, id:items.last().data("spr_id")}});
+        }
     });
 
     function fill_all_sprint_us(){
@@ -83,7 +123,7 @@ $(document).ready(($)=>{
                                 <!-- <div class="input-group-addon">Points</div> -->
                                 <input type="number" class="form-control form-control-sm" id="total_pts" placeholder="Username" min="0" value="${sprint.points}" required>
                             </div>
-                            <button type="submit" class="btn btn-success col-lg-5">Change</button>
+                            <button type="submit" class="btn btn-success col-lg-5" id='change_total'>Change</button>
                         </form>
                     </div>
                 </div>
@@ -98,6 +138,7 @@ $(document).ready(($)=>{
         $('#spr_'+sprint.id).data('spr_id', sprint.id);
         $('#spr_'+sprint.id).data('total', sprint.points);
         $('#spr_'+sprint.id).data('pt_left', sprint.points);
+        $('#spr_'+sprint.id).find('#left').text('Left: ' + sprint.points);
     }
 
     function init_containers(containers){
@@ -118,28 +159,42 @@ $(document).ready(($)=>{
         });
     }
 
-    function assign_us_to_sprint(item, sprint){
-        if(parseInt(sprint) >= 0){
+    function assign_us_to_sprint(item, sprint, source="#spr_us"){
+        if(sprint === -1){
+            $(item).detach().appendTo($("#spr_us"));
+            update_points(item, $("#spr_us"), source);
+        }else{
             $(item).detach().appendTo($("#spr_"+sprint).find('.spr_us_container'));
-            update_points(item, $("#spr_"+sprint).find('.spr_us_container'), "#spr_us");
+            update_points(item, $("#spr_"+sprint).find('.spr_us_container'), source);
         }
     }
 
     function update_points(el, target, source){
         if(!$(target).is($(source)) && $(target).has($(el))){
-            let item = null;
+            let item = null, new_sp = -1;
             if($(source).prop('id')!=="spr_us"){
                 item = $(source).parents().closest(".pj_spr");
                 item.data('pt_left', (parseFloat(item.data('pt_left'))
                 + parseFloat($(el).data('estimate'))));
                 item.find('#left').text('Left: ' + item.data('pt_left'));
+                item.find("#total_pts").attr('min', parseFloat(item.data('total'))
+                                                    - parseFloat(item.data('pt_left')));
             }
             if($(target).prop('id')!=="spr_us"){
                 item = $(target).parents().closest(".pj_spr");
+                new_sp = item.data('spr_id');
                 item.data('pt_left', (parseFloat(item.data('pt_left'))
                 - parseFloat($(el).data('estimate'))));
                 item.find('#left').text('Left: ' + item.data('pt_left'));
+                item.find("#total_pts").attr('min', parseFloat(item.data('total'))
+                                                    - parseFloat(item.data('pt_left')));
             }
+            ipcRenderer.send("update", {type:"us_sprint",
+            data: {
+                id:$(el).data('id'),
+                project:project_id,
+                sprint:new_sp
+            }});
         }
     }
 });

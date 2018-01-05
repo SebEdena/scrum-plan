@@ -126,14 +126,9 @@ function update_item(item, type, callback){
 };
 
 function delete_item(item, type, callback){
-    let del = null;
-    for(let obj in global.data[type]){
-        if(global.data[type][obj].id === item[0][type].id){
-            del = obj;
-            break;
-        }
+    if(global.data[type].hasOwnProperty(item[0][type].id)){
+        delete global.data[type][item[0][type].id];
     }
-    global.data[type].splice(del, 1);
     callback();
 }
 
@@ -144,6 +139,10 @@ function send_update(args, callback){
                              text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
                              values: [args.data.feature, args.data.logs, args.data.estimate, args.data.id, args.data.project]
                          }; column="user_stories"; break;
+        case 'us_sprint': query = { name: 'update-us-sprint',
+                                    text: 'UPDATE user_stories SET sprint=$1 WHERE id=$2 AND project=$3',
+                                    values: [args.data.sprint, args.data.id, args.data.project]
+                                }; column="user_stories"; break;
         default: break;
     }
     client.query(query, (err, res) => {
@@ -161,6 +160,10 @@ function send_delete(args, callback){
                              text: 'DELETE FROM user_stories WHERE id=$1 AND project=$2',
                              values: [args.data.id, args.data.project]
                          }; column="user_stories"; break;
+        case 'sprint': query = { name: 'delete-sprint',
+                                text: 'DELETE FROM sprints WHERE id=$1 AND project=$2',
+                                values: [args.data.id, args.data.project]
+                            }; column="sprints"; break;
         default: break;
     }
     client.query(query, (err, res) => {

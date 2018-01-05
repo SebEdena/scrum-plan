@@ -4,8 +4,12 @@ DROP TRIGGER IF EXISTS deleted_projects_trigger ON projects CASCADE;
 DROP TRIGGER IF EXISTS created_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS updated_user_stories_trigger ON user_stories CASCADE;
 DROP TRIGGER IF EXISTS deleted_user_stories_trigger ON user_stories CASCADE;
+DROP TRIGGER IF EXISTS created_sprints_trigger ON sprints CASCADE;
+DROP TRIGGER IF EXISTS updated_sprints_trigger ON sprints CASCADE;
+DROP TRIGGER IF EXISTS deleted_sprints_trigger ON sprints CASCADE;
 DROP TRIGGER IF EXISTS pick_us_number ON user_stories CASCADE;
 DROP FUNCTION IF EXISTS us_inc() CASCADE;
+DROP FUNCTION IF EXISTS spr_inc() CASCADE;
 DROP FUNCTION IF EXISTS notify_create() CASCADE;
 DROP FUNCTION IF EXISTS notify_update() CASCADE;
 DROP FUNCTION IF EXISTS notify_delete() CASCADE;
@@ -28,12 +32,30 @@ CREATE TABLE user_stories(
     PRIMARY KEY (project, id)
 );
 
+CREATE TABLE sprints(
+    id INTEGER NOT NULL,
+    project INTEGER NOT NULL REFERENCES projects(id),
+    points INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (project, id)
+);
+
 CREATE OR REPLACE FUNCTION us_inc() RETURNS TRIGGER AS
 $$
   BEGIN
     NEW.id := (SELECT COALESCE(MAX(us.id) + 1, 1)
     FROM user_stories us
     WHERE us.project = NEW.project);
+    RETURN NEW;
+  END
+$$
+LANGUAGE plpgsql VOLATILE;
+
+CREATE OR REPLACE FUNCTION spr_inc() RETURNS TRIGGER AS
+$$
+  BEGIN
+    NEW.id := (SELECT COALESCE(MAX(spr.id) + 1, 0)
+    FROM sprints spr
+    WHERE spr.project = NEW.project);
     RETURN NEW;
   END
 $$
