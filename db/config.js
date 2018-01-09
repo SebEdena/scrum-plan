@@ -143,10 +143,15 @@ function send_update(args, callback){
                                     text: 'UPDATE user_stories SET sprint=$1 WHERE id=$2 AND project=$3',
                                     values: [args.data.sprint, args.data.id, args.data.project]
                                 }; column="user_stories"; break;
+        case 'sprint': query = { name: 'update-sprint',
+                                 text: 'UPDATE sprints SET points=$1 WHERE id=$2 AND project=$3',
+                                 values: [args.data.points, args.data.id, args.data.project]
+                             }; column="sprints"; break;
         default: break;
     }
     client.query(query, (err, res) => {
         if(err){
+            console.log(err);
             callback(err);
         }
         callback(null);
@@ -216,7 +221,7 @@ ipcMain.on("load", (event, args) => {
 
 ipcMain.on('update', (event, args) => {
     send_update(args, res => {
-        if(typeof res === 'Error'){
+        if(res){
             let obj = {data: args['data'],
                        action: "update",
                        kind: args['type'],
@@ -228,7 +233,7 @@ ipcMain.on('update', (event, args) => {
 
 ipcMain.on('delete', (event, args) => {
     send_delete(args, res => {
-        if(typeof res === 'Error'){
+        if(res){
             let obj = {data: args['data'],
             kind: args['type'],
             action: "delete",

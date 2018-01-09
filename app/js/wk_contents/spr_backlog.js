@@ -33,13 +33,14 @@ $(document).ready(($)=>{
     ipcRenderer.on('insert', (event, args) =>{
         if(args.type === "sprints" && $("#spr_"+args.data.id).length === 0){
             fill_sprint(args.data);
+            $("#spr_"+args.data.id).find('#spr_total_edit').trigger('click');
         }
     });
 
     ipcRenderer.on('delete', (event, args) =>{
         if(args.type === "sprints"){
             for(let us of $("#spr_"+args.data.id).find('.spr_user_story')){
-                assign_us_to_sprint($(us), -1, "#spr_"+args.data.id);
+                assign_us_to_sprint($(us), -1, true, "#spr_"+args.data.id);
             }
             $("#spr_"+args.data.id).remove();
         }
@@ -50,16 +51,30 @@ $(document).ready(($)=>{
             if($('#spr_us'+args.data.id).length === 0){
                 fill_sprint_us(args.data);
             }else{
+                $('#spr_us'+args.data.id).data('estimate', parseFloat(args.data.estimate));
                 let previous = $('#spr_us'+args.data.id).parents().closest(".pj_spr");
                 if(previous.data('spr_id') !== args.data.sprint){
-                    assign_us_to_sprint($('#spr_us'+args.data.id), args.data.sprint, "#"+previous.attr('id'));
+                    assign_us_to_sprint($('#spr_us'+args.data.id), args.data.sprint, true, "#"+previous.attr('id'));
                 }
+                $('#spr_us'+args.data.id).html(`<p>US#${args.data.id} <small class="text-muted">Estimated: ${parseFloat(args.data.estimate)}</small></p>`);
+                $('#spr_us' + args.data.id).tooltip('dispose').tooltip({
+                    placement: 'top',
+                    title: args.data.feature
+                });
             }
-            $('#spr_us'+args.data.id).html(`<p>US#${args.data.id} <small class="text-muted">Estimated: ${args.data.estimate}</small></p>`);
-            $('#spr_us' + args.data.id).tooltip('dispose').tooltip({
-                placement: 'top', // or bottom, left, right, and variations
-                title: args.data.feature
-            });
+        }
+        if(args.type === "sprints"){
+            let item = $('#spr_'+args.data.id);
+            let diff_pts = parseFloat(args.data.points) - item.data('total');
+            item.data('total', parseFloat(args.data.points));
+            item.find('#total_pts').val(item.data('total'))
+                                   .attr('min', new Decimal(item.data('total'))
+                                                .minus(item.data('pt_left'))
+                                                .toNumber());
+            item.data('total', parseFloat(args.data.points));
+            item.data('pt_left', item.data('pt_left') + diff_pts);
+            item.find('#left').text('Left: ' + item.data('pt_left'));
+            item.find('#spr_total_edit').text('Edit').prop("disabled", false);
         }
     });
 
@@ -87,16 +102,16 @@ $(document).ready(($)=>{
 
     function fill_sprint_us(us){
         let html = `<div class="col-xl-6 spr_user_story d-flex flex-row justify-content-around rounded" id="spr_us${us.id}">
-                        <p>US#${us.id} <small class="text-muted">Estimated: ${us.estimate}</small></p>
+                        <p>US#${us.id} <small class="text-muted">Estimated: ${parseFloat(us.estimate)}</small></p>
                     </div>`;
         $("#spr_us").append($(html));
         $('#spr_us' + us.id).data('id', us.id);
-        $('#spr_us' + us.id).data('estimate', us.estimate);
+        $('#spr_us' + us.id).data('estimate', parseFloat(us.estimate));
         $('#spr_us' + us.id).tooltip({
             placement: 'top', // or bottom, left, right, and variations
             title: us.feature
         });
-        assign_us_to_sprint($('#spr_us'+us.id), us.sprint);
+        assign_us_to_sprint($('#spr_us'+us.id), us.sprint, false);
     }
 
     function fill_all_sprints(){
@@ -116,14 +131,17 @@ $(document).ready(($)=>{
                                 Sprint #${sprint.id}
                             </a>
                         </h3>
-                        <h3 class="m-0 col-xl-4" id="left"></h3>
-                        <form class="form-inline m-0 col-xl-5 d-flex">
-                            <label class="sr-only" for="total_pts">Total sprint points</label>
-                            <div class="input-group col-lg-7">
+                        <h3 class="m-0 col-xl-3" id="left"></h3>
+                        <form class="form-inline m-0 col-xl-6 d-flex justify-content-center">
+                            <!-- <label for="total_pts">Total sprint points</label> -->
+                            <div class="form-group input-group m-0 col-lg-6">
                                 <!-- <div class="input-group-addon">Points</div> -->
-                                <input type="number" class="form-control form-control-sm" id="total_pts" placeholder="Username" min="0" value="${sprint.points}" required>
+                                <input type="number" class="form-control form-control-sm rounded" id="total_pts" name="points" placeholder="Total points" min="0" step="0.5" value="${parseFloat(sprint.points)}" required disabled>
                             </div>
-                            <button type="submit" class="btn btn-success col-lg-5" id='change_total'>Change</button>
+                            <div class="col-lg-6 row p-0 btn-group">
+                                <button type="button" class="btn btn-success col-sm-5" id='spr_total_edit'>Edit</button>
+                                <button type="button" class="btn btn-danger col-sm-7" id='spr_total_cancel' disabled>Cancel</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -135,10 +153,61 @@ $(document).ready(($)=>{
                 </div>
             </div>`;
         $('#sprints_container').append($(html));
-        $('#spr_'+sprint.id).data('spr_id', sprint.id);
-        $('#spr_'+sprint.id).data('total', sprint.points);
-        $('#spr_'+sprint.id).data('pt_left', sprint.points);
-        $('#spr_'+sprint.id).find('#left').text('Left: ' + sprint.points);
+        $('#spr_'+sprint.id).data('spr_id', sprint.id)
+                            .data('total', parseFloat(sprint.points))
+                            .data('pt_left', parseFloat(sprint.points))
+                            .find('#left').text('Left: ' + parseFloat(sprint.points));
+
+        $('#spr_'+sprint.id).find('#total_pts').tooltip({
+            placement: "top",
+            title: "Total sprint points"
+        });
+
+        $('#spr_'+sprint.id).find('#spr_total_edit').on('click', handle_edit($('#spr_'+sprint.id)));
+        $('#spr_'+sprint.id).find('#spr_total_cancel').on('click', handle_cancel($('#spr_'+sprint.id)));
+    }
+
+    function handle_edit(item){
+        let btn = item.find('#spr_total_edit');
+        if(btn.text() === "Edit"){
+            btn.text("Ok");
+            item.find('input, #spr_total_cancel').prop("disabled", false);
+            item.find('#total_pts').trigger('focus');
+        }else{
+            item.find('form').trigger('submit');
+        }
+        item.find('form').validate({
+            submitHandler: (form)=>{
+                item.find('input, button').prop("disabled", true);
+                let data = {
+                    id: item.data('spr_id'),
+                    project: project_id,
+                    points: parseFloat(form.points.value).toFixed(2)
+                };
+                ipcRenderer.send('update', {type: "sprint", data: data});
+            },
+            showErrors: function(errorMap, errorList) {
+                $.each(errorList, function (index, error) {
+                    $(error.element).tooltip("dispose")
+                    .addClass("error")
+                    .tooltip({
+                        placement: 'top',
+                        title: error.message
+                    });
+                });
+            }
+        });
+    }
+
+    function handle_cancel(item){
+        item.find('#spr_total_edit').text('Edit');
+        item.find('#spr_total_cancel').prop("disabled", true);
+        item.find('#total_pts').val(item.data('total'))
+                                                .tooltip('dispose').tooltip({
+                                                    placement: "top",
+                                                    title: "Total sprint points"
+                                                })
+                                                .prop("disabled", true);
     }
 
     function init_containers(containers){
@@ -148,53 +217,71 @@ $(document).ready(($)=>{
                     return true;
                 }
                 let item = $(target).parents().closest(".pj_spr");
-                return (item.data('pt_left') - $(el).data('estimate')) >= 0;
+                return (new Decimal(item.data('pt_left'))
+                                        .minus($(el).data('estimate'))
+                                        .toNumber()) >= 0;
             },
         });
         for(let container of containers){
             drake.containers.push(container);
         }
         drake.on('drop', (el, target, source, sibling) => {
-            update_points(el, target, source);
+            update_points(el, target, source, true);
         });
+        // drake.on('drag',function(el,source){
+        //     var h = $(window).height();
+        //     $(document).mousemove(function(e) {
+        //         var mousePosition = e.pageY - $(window).scrollTop();
+        //         var topRegion = 220;
+        //         var bottomRegion = h - 220;
+        //         if(e.which == 1 && (mousePosition < topRegion || mousePosition > bottomRegion)){    // e.wich = 1 => click down !
+        //             var distance = e.clientY - h / 2;
+        //             distance = distance * 0.1; // <- velocity
+        //             $(document).scrollTop( distance + $(document).scrollTop()) ;
+        //         }else{
+        //             $(document).unbind('mousemove');
+        //         }
+        //     });
+        // });
     }
 
-    function assign_us_to_sprint(item, sprint, source="#spr_us"){
-        if(sprint === -1){
-            $(item).detach().appendTo($("#spr_us"));
-            update_points(item, $("#spr_us"), source);
-        }else{
-            $(item).detach().appendTo($("#spr_"+sprint).find('.spr_us_container'));
-            update_points(item, $("#spr_"+sprint).find('.spr_us_container'), source);
-        }
+    function assign_us_to_sprint(item, sprint, update, source="#spr_us"){
+        let target = (sprint === -1)?$("#spr_us"):$("#spr_"+sprint).find('.spr_us_container');
+        let new_source = (source === "#spr_us")?$(source):$(source).find('.spr_us_container');
+        $(item).detach().appendTo(target);
+        update_points(item, target, new_source, update);
     }
 
-    function update_points(el, target, source){
+    function update_points(el, target, source, update){
         if(!$(target).is($(source)) && $(target).has($(el))){
             let item = null, new_sp = -1;
             if($(source).prop('id')!=="spr_us"){
                 item = $(source).parents().closest(".pj_spr");
-                item.data('pt_left', (parseFloat(item.data('pt_left'))
-                + parseFloat($(el).data('estimate'))));
+                item.data('pt_left', (new Decimal(item.data('pt_left'))
+                                        .plus($(el).data('estimate')))
+                                        .toNumber());
                 item.find('#left').text('Left: ' + item.data('pt_left'));
-                item.find("#total_pts").attr('min', parseFloat(item.data('total'))
-                                                    - parseFloat(item.data('pt_left')));
+                item.find("#total_pts").attr('min', item.data('total')
+                                                    - item.data('pt_left'));
             }
             if($(target).prop('id')!=="spr_us"){
                 item = $(target).parents().closest(".pj_spr");
                 new_sp = item.data('spr_id');
-                item.data('pt_left', (parseFloat(item.data('pt_left'))
-                - parseFloat($(el).data('estimate'))));
+                item.data('pt_left', (new Decimal(item.data('pt_left'))
+                                        .minus($(el).data('estimate')))
+                                        .toNumber());
                 item.find('#left').text('Left: ' + item.data('pt_left'));
-                item.find("#total_pts").attr('min', parseFloat(item.data('total'))
-                                                    - parseFloat(item.data('pt_left')));
+                item.find("#total_pts").attr('min', item.data('total')
+                                                    - item.data('pt_left'));
             }
-            ipcRenderer.send("update", {type:"us_sprint",
-            data: {
-                id:$(el).data('id'),
-                project:project_id,
-                sprint:new_sp
-            }});
+            if(update){
+                ipcRenderer.send("update", {type:"us_sprint",
+                data: {
+                    id:$(el).data('id'),
+                    project:project_id,
+                    sprint:new_sp
+                }});
+            }
         }
     }
 });

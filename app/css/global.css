@@ -1,4 +1,4 @@
-a, button, input:enabled, textarea:enabled, .nav-group-item{
+a, button:enabled, input:enabled, textarea:enabled, .nav-group-item{
     cursor:pointer !important;
 }
 
