@@ -108,7 +108,7 @@ $(document).ready(($)=>{
         $('#spr_us' + us.id).data('id', us.id);
         $('#spr_us' + us.id).data('estimate', parseFloat(us.estimate));
         $('#spr_us' + us.id).tooltip({
-            placement: 'top', // or bottom, left, right, and variations
+            placement: 'top',
             title: us.feature
         });
         assign_us_to_sprint($('#spr_us'+us.id), us.sprint, false);
@@ -163,8 +163,8 @@ $(document).ready(($)=>{
             title: "Total sprint points"
         });
 
-        $('#spr_'+sprint.id).find('#spr_total_edit').on('click', handle_edit($('#spr_'+sprint.id)));
-        $('#spr_'+sprint.id).find('#spr_total_cancel').on('click', handle_cancel($('#spr_'+sprint.id)));
+        $('#spr_'+sprint.id).find('#spr_total_edit').on('click', ()=>{handle_edit($('#spr_'+sprint.id))});
+        $('#spr_'+sprint.id).find('#spr_total_cancel').on('click', ()=>{handle_cancel($('#spr_'+sprint.id))});
     }
 
     function handle_edit(item){

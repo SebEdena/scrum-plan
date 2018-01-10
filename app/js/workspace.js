@@ -7,6 +7,7 @@ let asked_fetch = {};
 
 $(document).ready(($) => {
     ipcRenderer.send("load", {type:"user_stories"});
+    ipcRenderer.send("load", {type:"sprints"});
 
     ipcRenderer.on("loaded", (event, args) => {
         if(args.ret){

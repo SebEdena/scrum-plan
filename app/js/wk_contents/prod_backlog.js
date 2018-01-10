@@ -1,4 +1,4 @@
-let tmp_us = [];
+let tmp_us = [], us_update = {};
 const us_msg_limit = 50;
 
 $(document).ready(($)=>{
@@ -48,6 +48,13 @@ $(document).ready(($)=>{
             $("#us"+args.data.id).find('#est').val(adjust_display(args.data.estimate));
             $('#us'+args.data.id).find("button").prop("disabled", false);
         }
+        if(args.type === "sprints"){
+            let id = 0;
+            while(us_update[args.data.id] != null && us_update[args.data.id].length > 0){
+                id = us_update[args.data.id].shift();
+                update_us($('#us' + id), $('#us' + id).find('form'));
+            }
+        }
     });
 
     ipcRenderer.on('delete', (event, args) => {
@@ -72,7 +79,7 @@ $(document).ready(($)=>{
                 default : break;
             }
             dialog.showMessageBox({title: "Scrum Assistant", type: 'error', buttons: ['Ok'],
-            message: msg});
+            message: msg}, ()=>{});
             $('#us'+args.data.id).find("button").prop("disabled", false);
         }
     });
@@ -195,7 +202,7 @@ $(document).ready(($)=>{
                     if (us[i].id === item.data('id')){
                         item.find('#feat').val(us[i].feature);
                         item.find('#desc').val(us[i].logs);
-                        item.find('#est').val(us[i].estimate);
+                        item.find('#est').val(parseFloat(us[i].estimate));
                         break;
                     }
                 }
@@ -219,14 +226,11 @@ $(document).ready(($)=>{
             submitHandler: (form) => {
                 item.find('#ok').text('Edit').removeClass("btn-success").addClass("btn-secondary");
                 item.find("input, textarea, button").prop("disabled", true);
-                let data = {
-                    feature: form.feature.value,
-                    logs: form.description.value,
-                    estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
-                    project: project_id,
-                    id: item.data('id')
-                };
-                ipcRenderer.send("update", {type: "us", data: data});
+                if(verify_update_ok(item)){
+                    update_us(item, form);
+                }else{
+                    us_est_overflow_resolve(item);
+                }
             },
             errorElement: "div"
         });
@@ -296,5 +300,74 @@ $(document).ready(($)=>{
                 }
             }
         });
+    }
+
+    function verify_update_ok(item){
+        let us = remote.getGlobal('data').user_stories[item.data('id')];
+        let sprint = remote.getGlobal('data').sprints[us.sprint];
+        let diff = new Decimal(sprint.points)
+                              .minus(us.estimate)
+                              .plus(item.find('#est').val())
+                              .toNumber();
+        console.log(diff <= sprint.points);
+        return diff <= sprint.points;
+    }
+
+    function update_us(item, form){
+        let data = {
+            feature: form.feature.value,
+            logs: form.description.value,
+            estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
+            project: project_id,
+            id: item.data('id')
+        };
+        ipcRenderer.send("update", {type: "us", data: data});
+    }
+
+    function us_est_overflow_resolve(item){
+        let us = remote.getGlobal('data').user_stories[item.data('id')];
+        let sprint = remote.getGlobal('data').sprints[us.sprint];
+        dialog.showMessageBox(remote.getCurrentWindow(),
+            {title: "Scrum Assistant",
+            type: 'info',
+            buttons: ['Revert', 'Add sprint points', 'Remove US from sprint', ],
+            message: `The estimate change in this user story (#${us.id}) causes sprint (#${sprint.id}) to contain more story points than it should. \nWhat do you want to do ?`},
+            (resp)=>{
+                console.log(resp);
+                switch (resp) {
+                    case 0: revert_us_points(us); break;
+                    case 1: ipcRenderer.send("update", {type:"us_sprint",
+                                data: {
+                                    id:us.id,
+                                    project:project_id,
+                                    sprint:-1
+                                }
+                            }); break;
+                    case 2: sprint_update_for_overflow(us, sprint); break;
+                    default: break;
+                }
+            });
+    }
+
+    function sprint_update_for_overflow(us, sprint){
+        if(!us_update.hasOwnProperty(sprint.id)){
+            us_update[sprint] = [];
+        }
+        us_update[sprint].push(us.id);
+        let new_points = new Decimal(sprint.points)
+                              .minus(us.estimate)
+                              .plus($('#us'+us.id).find('#est').val())
+                              .toNumber();
+        let data = {
+            id: sprint,
+            project: project_id,
+            points: new_points
+        };
+        ipcRenderer.send('update', {type: "sprint", data: data});
+    }
+
+    function revert_us_points(us){
+        $('#us'+us.id).find('#est').val(parseFloat(us.estimate));
+        $('#us'+us.id).find("button").prop("disabled", false);
     }
 });
