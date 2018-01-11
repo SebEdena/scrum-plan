@@ -51,10 +51,22 @@ $(document).ready(($)=>{
             if($('#spr_us'+args.data.id).length === 0){
                 fill_sprint_us(args.data);
             }else{
+                let diff_est = new Decimal(args.data.estimate)
+                                    .minus($('#spr_us'+args.data.id).data('estimate'));
+                let previous_sp = $('#spr_us'+args.data.id).parents().closest(".pj_spr");
                 $('#spr_us'+args.data.id).data('estimate', parseFloat(args.data.estimate));
-                let previous = $('#spr_us'+args.data.id).parents().closest(".pj_spr");
-                if(previous.data('spr_id') !== args.data.sprint){
-                    assign_us_to_sprint($('#spr_us'+args.data.id), args.data.sprint, true, "#"+previous.attr('id'));
+                if(previous_sp.data('spr_id') !== args.data.sprint){
+                    assign_us_to_sprint($('#spr_us'+args.data.id), args.data.sprint, true, "#"+previous_sp.attr('id'));
+                } else {
+                    if(args.data.sprint !== -1){
+                        $('#spr_'+args.data.sprint).data('pt_left',
+                        new Decimal($('#spr_'+args.data.sprint).data('pt_left'))
+                        .minus(diff_est)
+                        .toNumber());
+                        $('#spr_'+args.data.sprint)
+                        .find('#left')
+                        .text('Left: ' + $('#spr_'+args.data.sprint).data('pt_left'));
+                    }
                 }
                 $('#spr_us'+args.data.id).html(`<p>US#${args.data.id} <small class="text-muted">Estimated: ${parseFloat(args.data.estimate)}</small></p>`);
                 $('#spr_us' + args.data.id).tooltip('dispose').tooltip({
@@ -79,7 +91,7 @@ $(document).ready(($)=>{
     });
 
     ipcRenderer.on('error', (event, args) =>{
-        console.error(args.err);
+        console.error(args);
     })
 
     $('#create_sp').on('click', ()=>{
@@ -228,21 +240,26 @@ $(document).ready(($)=>{
         drake.on('drop', (el, target, source, sibling) => {
             update_points(el, target, source, true);
         });
-        // drake.on('drag',function(el,source){
-        //     var h = $(window).height();
-        //     $(document).mousemove(function(e) {
-        //         var mousePosition = e.pageY - $(window).scrollTop();
-        //         var topRegion = 220;
-        //         var bottomRegion = h - 220;
-        //         if(e.which == 1 && (mousePosition < topRegion || mousePosition > bottomRegion)){    // e.wich = 1 => click down !
-        //             var distance = e.clientY - h / 2;
-        //             distance = distance * 0.1; // <- velocity
-        //             $(document).scrollTop( distance + $(document).scrollTop()) ;
-        //         }else{
-        //             $(document).unbind('mousemove');
-        //         }
-        //     });
-        // });
+        drake.on('drag',function(el,source){
+            var h = $(".content-page#spr_backlog").height();
+            $(".content-page#spr_backlog").on('mousemove', function(e) {
+                // console.log(e.clientY);
+                console.log(h);
+                var mousePosition = e.pageY - $(".content-page#spr_backlog").scrollTop();
+                var topRegion = 220;
+                var bottomRegion = h - 220;
+                if(e.which == 1 && (mousePosition < topRegion || mousePosition > bottomRegion)){    // e.wich = 1 => click down !
+
+                        console.log('A there');
+                    var distance = e.clientY - h / 2;
+                    distance = distance * 0.1; // <- velocity
+                    $(".pane").scrollTop( distance + $(".content-page#spr_backlog").scrollTop()) ;
+                }else{
+                    console.log('there');
+                    // $(".content-page#spr_backlog").unbind('mousemove');
+                }
+            });
+        });
     }
 
     function assign_us_to_sprint(item, sprint, update, source="#spr_us"){

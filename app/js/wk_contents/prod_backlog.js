@@ -52,7 +52,7 @@ $(document).ready(($)=>{
             let id = 0;
             while(us_update[args.data.id] != null && us_update[args.data.id].length > 0){
                 id = us_update[args.data.id].shift();
-                update_us($('#us' + id), $('#us' + id).find('form'));
+                update_us($('#us' + id), $('#us' + id).find('form')[0]);
             }
         }
     });
@@ -303,14 +303,19 @@ $(document).ready(($)=>{
     }
 
     function verify_update_ok(item){
-        let us = remote.getGlobal('data').user_stories[item.data('id')];
-        let sprint = remote.getGlobal('data').sprints[us.sprint];
-        let diff = new Decimal(sprint.points)
-                              .minus(us.estimate)
-                              .plus(item.find('#est').val())
-                              .toNumber();
-        console.log(diff <= sprint.points);
-        return diff <= sprint.points;
+        let current_us = remote.getGlobal('data').user_stories[item.data('id')];
+        let us = remote.getGlobal('data').user_stories;
+        if(current_us.sprint === -1){
+            return true;
+        }
+        let sprint = remote.getGlobal('data').sprints[current_us.sprint];
+        let diff = new Decimal(sprint.points).minus(item.find('#est').val());
+        for(let i in us){
+            if(us[i].sprint === sprint.id && us[i].id !== current_us.id){
+                diff = diff.minus(us[i].estimate);
+            }
+        }
+        return diff.toNumber() >= 0;
     }
 
     function update_us(item, form){
@@ -330,10 +335,9 @@ $(document).ready(($)=>{
         dialog.showMessageBox(remote.getCurrentWindow(),
             {title: "Scrum Assistant",
             type: 'info',
-            buttons: ['Revert', 'Add sprint points', 'Remove US from sprint', ],
+            buttons: ['Revert', 'Remove US from sprint', 'Add sprint points'],
             message: `The estimate change in this user story (#${us.id}) causes sprint (#${sprint.id}) to contain more story points than it should. \nWhat do you want to do ?`},
             (resp)=>{
-                console.log(resp);
                 switch (resp) {
                     case 0: revert_us_points(us); break;
                     case 1: ipcRenderer.send("update", {type:"us_sprint",
@@ -351,15 +355,15 @@ $(document).ready(($)=>{
 
     function sprint_update_for_overflow(us, sprint){
         if(!us_update.hasOwnProperty(sprint.id)){
-            us_update[sprint] = [];
+            us_update[sprint.id] = [];
         }
-        us_update[sprint].push(us.id);
+        us_update[sprint.id].push(us.id);
         let new_points = new Decimal(sprint.points)
                               .minus(us.estimate)
                               .plus($('#us'+us.id).find('#est').val())
                               .toNumber();
         let data = {
-            id: sprint,
+            id: sprint.id,
             project: project_id,
             points: new_points
         };
