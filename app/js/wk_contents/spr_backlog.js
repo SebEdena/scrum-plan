@@ -1,7 +1,8 @@
-let drake = null, del_sprints = [];
+let drake = null, del_sprints = [], window_height = 0;
 
 $(document).ready(($)=>{
     $("#spr_us").data('spr_id', -1);
+    window_height = $(window).height();
 
     ipcRenderer.send("fetch", {type:"user_stories"});
 
@@ -93,6 +94,10 @@ $(document).ready(($)=>{
     ipcRenderer.on('error', (event, args) =>{
         console.error(args);
     })
+
+    $(window).resize(()=>{
+        window_height = $(window).height();
+    });
 
     $('#create_sp').on('click', ()=>{
         ipcRenderer.send('create', {type: "sprint", data:{project:project_id}});
@@ -240,25 +245,16 @@ $(document).ready(($)=>{
         drake.on('drop', (el, target, source, sibling) => {
             update_points(el, target, source, true);
         });
-        drake.on('drag',function(el,source){
-            var h = $(".content-page#spr_backlog").height();
-            $(".content-page#spr_backlog").on('mousemove', function(e) {
-                // console.log(e.clientY);
-                console.log(h);
-                var mousePosition = e.pageY - $(".content-page#spr_backlog").scrollTop();
-                var topRegion = 220;
-                var bottomRegion = h - 220;
-                if(e.which == 1 && (mousePosition < topRegion || mousePosition > bottomRegion)){    // e.wich = 1 => click down !
+        $(document).on('mousemove', function(e) {
+            let mousePosition = e.pageY - $(".content-page#spr_backlog").scrollTop();
+            let topRegion = 0.15*window_height;
+            let bottomRegion = window_height - 0.15*window_height;
 
-                        console.log('A there');
-                    var distance = e.clientY - h / 2;
-                    distance = distance * 0.1; // <- velocity
-                    $(".pane").scrollTop( distance + $(".content-page#spr_backlog").scrollTop()) ;
-                }else{
-                    console.log('there');
-                    // $(".content-page#spr_backlog").unbind('mousemove');
-                }
-            });
+            if(e.which == 1 && drake.dragging && (mousePosition < topRegion || mousePosition > bottomRegion)){    // e.wich = 1 => click down !
+                let distance = e.clientY - window_height / 2;
+                distance = distance * 0.1; // <- velocity
+                $(".pane").scrollTop( distance + $(".pane").scrollTop()) ;
+            }
         });
     }
 
