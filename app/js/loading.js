@@ -1,25 +1,36 @@
 const {ipcRenderer} = require('electron');
+const remote = require('electron').remote;
+const {dialog} = remote.require('electron');
 
-$("#modal_connect").modal({
-    backdrop: false,
-    keyboard: false,
-    show: false
+$(document).ready(($)=>{
+    $('#spinner > img').hide();
+    $('#spinner').css('visibility', 'visible');
+
+    ipcRenderer.on('error', (event, args) => {
+        $('#spinner > div').hide();
+        $('#spinner > img').toggle();
+        $('#connection_status').text('Connection failed.');
+        if(args['type'] === "connection"){
+            dialog.showMessageBox(remote.getCurrentWindow(),
+            {title: 'Error',
+            type: 'error',
+            noLink: true,
+            defaultId: 1,
+            message: 'The server is unavailable.\nPlease ensure you have a working Internet connection and retry, or quit.',
+            detail: 'Error: ' + args.err.code,
+            buttons: ['Exit', 'Retry']}, resp=>{
+                switch(resp){
+                    case 0: ipcRenderer.send("action", "quit"); break;
+                    case 1: ipcRenderer.send("action", "reconnect");
+                            $('#spinner > div').toggle();
+                            $('#spinner > img').hide();
+                            $('#connection_status').text('Connecting, please wait...');
+                            break;
+                    default: break;
+                }
+            });
+        }
+    });
+
+    ipcRenderer.send("action", "ready");
 });
-
-$("#retry").on('click', function(){
-    hideModal("modal_connect");
-    ipcRenderer.send("action", "reconnect");
-});
-
-$("#close").on('click', function(){
-    hideModal("modal_connect");
-    ipcRenderer.send("action", "quit");
-});
-
-ipcRenderer.on('error', (event, args) => {
-    if(args['type'] === "connection"){
-        showModal("modal_connect");
-    }
-});
-
-ipcRenderer.send("action", "ready");

@@ -47,16 +47,11 @@ app.on("ready", function(){
 
 function connect(){
     async.waterfall([
-        function(cb){
-            cb(db.init(mainWindow, app));
-        },
-        function(cb){
-            cb(db.connect());
-        },
-        function(cb){
-            cb(db.init_realtime());
-        }
-    ], function (err) {
+        help_init,
+        db.init,
+        db.connect,
+        db.init_realtime
+    ], function (err, res) {
         if(err){
             mainWindow.webContents.send('error', {type: "connection", err: err});
         }else{
@@ -65,6 +60,10 @@ function connect(){
             }, 3000);
         }
     });
+}
+
+function help_init(callback){
+    callback(null, mainWindow, app);
 }
 
 ipcMain.on("action", (event, args) => {

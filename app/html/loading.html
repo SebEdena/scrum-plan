@@ -6,13 +6,13 @@
     <link type="text/css" rel="stylesheet" href="../css/loading.css">
     <link type="text/css" rel="stylesheet" href="../css/global.css">
     <script type="text/javascript" src="../js/bundle.js"></script>
-    <script>var $ = require("jquery"); var Popper=require("popper.js");</script>
+    <script>const $ = require("jquery");const Popper = require("popper.js");</script>
     <script type="text/javascript" src="../../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../js/global.js"></script>
 </head>
 <body class="container" id="back-color">
     <div class="row align-items-center">
-        <div class="sk-cube-grid">
+        <div class="sk-cube-grid" id="spinner">
             <div class="sk-cube sk-cube1"></div>
             <div class="sk-cube sk-cube2"></div>
             <div class="sk-cube sk-cube3"></div>
@@ -22,26 +22,11 @@
             <div class="sk-cube sk-cube7"></div>
             <div class="sk-cube sk-cube8"></div>
             <div class="sk-cube sk-cube9"></div>
+            <img src="../img/sad.jpg" id="sad_face_error"></img>
         </div>
     </div>
     <div class="text-center">
-        <p>Connecting, please wait...</p>
-    </div>
-    <div class="modal" id="modal_connect" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Unable to connect</h5>
-                </div>
-                <div class="modal-body">
-                    <p>Modal body text goes here.</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-danger" id="retry">Retry</button>
-                    <button type="button" class="btn btn-secondary" id="close">Close App</button>
-                </div>
-            </div>
-        </div>
+        <p id="connection_status">Connecting, please wait...</p>
     </div>
 </body>
 <script type="text/javascript" src="../js/loading.js"></script>

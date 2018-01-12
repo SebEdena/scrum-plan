@@ -262,30 +262,26 @@ module.exports = {
         });
     },
 
-    init: function(front, appli){
+    init: function(front, appli, callback){
         view = front;
         channel_send = front.webContents;
         app = appli;
         init_client((err)=>{
-            return null;
+            callback(err);
         });
     },
 
-    connect: function(){
-        let nok = new Error("Server unavailable");
+    connect: function(callback){
+        // let nok = new Error("Server unavailable");
         client.connect((err) => {
-            if (err) {
-                return err;
-            }
-            nok = null;
-            return null;
+            callback(err);
         });
     },
 
-    init_realtime: function(){
+    init_realtime: function(callback){
         client.query("LISTEN insert; LISTEN update; LISTEN delete", (err,res) => {
             if(err){
-                return err;
+                callback(err);
             }
         });
         client.on("notification", (data) => {
@@ -295,7 +291,7 @@ module.exports = {
                 channel_send.send(data.channel, {type: type, data:item[0][type]});
             });
         });
-        return null;
+        callback(null);
     },
 
     disconnect: function(){
