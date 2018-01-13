@@ -1,4 +1,4 @@
-let tmp_us = [], us_update = {};
+let tmp_us = [], us_update = {}, us_sprint_update = [];
 const us_msg_limit = 50;
 
 $(document).ready(($)=>{
@@ -43,9 +43,14 @@ $(document).ready(($)=>{
 
     ipcRenderer.on('update', (event, args) => {
         if(args.type === "user_stories"){
-            $("#us"+args.data.id).find('#feat').val(args.data.feature);
-            $("#us"+args.data.id).find('#desc').val(args.data.logs);
-            $("#us"+args.data.id).find('#est').val(adjust_display(args.data.estimate));
+            if(us_sprint_update.indexOf(args.data.id) >= 0){
+                us_sprint_update.splice(us_sprint_update.indexOf(args.data.id), 1);
+                update_us($('#us' + args.data.id), $('#us' + args.data.id).find('form')[0]);
+            }else{
+                $("#us"+args.data.id).find('#feat').val(args.data.feature);
+                $("#us"+args.data.id).find('#desc').val(args.data.logs);
+                $("#us"+args.data.id).find('#est').val(adjust_display(args.data.estimate));
+            }
             $('#us'+args.data.id).find("button").prop("disabled", false);
         }
         if(args.type === "sprints"){
@@ -70,7 +75,6 @@ $(document).ready(($)=>{
     });
 
     ipcRenderer.on('error', (event, args) => {
-        console.error(args.err.stack);
         if(args.type === "us"){
             let msg = 'The US #' + args.data.id+ ' : \"' + args.data.feature;
             switch(args.action){
@@ -329,6 +333,17 @@ $(document).ready(($)=>{
         ipcRenderer.send("update", {type: "us", data: data});
     }
 
+    function update_us(item, form){
+        let data = {
+            feature: form.feature.value,
+            logs: form.description.value,
+            estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
+            project: project_id,
+            id: item.data('id')
+        };
+        ipcRenderer.send("update", {type: "us", data: data});
+    }
+
     function us_est_overflow_resolve(item){
         let us = remote.getGlobal('data').user_stories[item.data('id')];
         let sprint = remote.getGlobal('data').sprints[us.sprint];
@@ -336,17 +351,12 @@ $(document).ready(($)=>{
             {title: "Scrum Assistant",
             type: 'info',
             buttons: ['Revert', 'Remove US from sprint', 'Add sprint points'],
+            defaultId:2,
             message: `The estimate change in this user story (#${us.id}) causes sprint (#${sprint.id}) to contain more story points than it should. \nWhat do you want to do ?`},
             (resp)=>{
                 switch (resp) {
                     case 0: revert_us_points(us); break;
-                    case 1: ipcRenderer.send("update", {type:"us_sprint",
-                                data: {
-                                    id:us.id,
-                                    project:project_id,
-                                    sprint:-1
-                                }
-                            }); break;
+                    case 1: remove_us_sprint(us, sprint); break;
                     case 2: sprint_update_for_overflow(us, sprint); break;
                     default: break;
                 }
@@ -373,5 +383,16 @@ $(document).ready(($)=>{
     function revert_us_points(us){
         $('#us'+us.id).find('#est').val(parseFloat(us.estimate));
         $('#us'+us.id).find("button").prop("disabled", false);
+    }
+
+    function remove_us_sprint(us, sprint){
+        us_sprint_update.push(us.id);
+        ipcRenderer.send("update", {type:"us_sprint",
+            data: {
+                id:us.id,
+                project:project_id,
+                sprint:-1
+            }
+        });
     }
 });
