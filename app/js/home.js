@@ -155,7 +155,7 @@ $(document).ready(($)=>{
      * @fires ipcMain#open_project
      */
     function insert_project(data){
-        var div = $.parseHTML(`
+        let div = $.parseHTML(`
             <div class="row mt-3 project" id='pj${data.id}'>
             <div class="col-sm-9">
             <div class="row"><h5 id='title'>${data.title}</h5></div>

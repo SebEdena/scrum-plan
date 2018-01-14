@@ -299,6 +299,7 @@ $(document).ready(($)=>{
                 item.find('#ok').text('Ok');
                 item.find('#del').text('Cancel');
                 item.find('#ok').removeClass('btn-secondary').addClass('btn-success');
+                item.find('input[name="feature"]').trigger('focus');
             }
         });
         item.find("form").validate({
@@ -506,6 +507,12 @@ $(document).ready(($)=>{
     function revert_us_points(us){
         $('#us'+us.id).find('#est').val(parseFloat(us.estimate));
         $('#us'+us.id).find("button").prop("disabled", false);
+
+        $('#us'+us.id).find('#ok').text('Ok');
+        $('#us'+us.id).find('#del').text('Cancel');
+        $('#us'+us.id).find('#ok').removeClass('btn-secondary').addClass('btn-success');
+        $('#us'+us.id).find("input, textarea, button").prop("disabled", false);
+        $('#us'+us.id).find('input[name="feature"]').trigger('focus');
     }
 
     /**

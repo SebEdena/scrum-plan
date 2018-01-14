@@ -183,7 +183,7 @@ $(document).ready(($)=>{
      */
     function fill_all_sprint_us(){
         let us = remote.getGlobal('data').user_stories;
-        for(i in us){
+        for(let i in us){
             fill_sprint_us(us[i]);
         }
     }
@@ -214,7 +214,7 @@ $(document).ready(($)=>{
      */
     function fill_all_sprints(){
         let sprints = remote.getGlobal('data').sprints;
-        for(i in sprints){
+        for(let i in sprints){
             fill_sprint(sprints[i]);
         }
     }
