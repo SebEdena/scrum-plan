@@ -8,12 +8,14 @@ DROP TRIGGER IF EXISTS created_sprints_trigger ON sprints CASCADE;
 DROP TRIGGER IF EXISTS updated_sprints_trigger ON sprints CASCADE;
 DROP TRIGGER IF EXISTS deleted_sprints_trigger ON sprints CASCADE;
 DROP TRIGGER IF EXISTS pick_us_number ON user_stories CASCADE;
+DROP TRIGGER IF EXISTS pick_spr_number ON sprints CASCADE;
 DROP FUNCTION IF EXISTS us_inc() CASCADE;
 DROP FUNCTION IF EXISTS spr_inc() CASCADE;
 DROP FUNCTION IF EXISTS notify_create() CASCADE;
 DROP FUNCTION IF EXISTS notify_update() CASCADE;
 DROP FUNCTION IF EXISTS notify_delete() CASCADE;
 DROP TABLE IF EXISTS user_stories CASCADE;
+DROP TABLE IF EXISTS sprints CASCADE;
 DROP TABLE IF EXISTS projects CASCADE;
 
 CREATE TABLE projects(
@@ -35,7 +37,7 @@ CREATE TABLE user_stories(
 CREATE TABLE sprints(
     id INTEGER NOT NULL,
     project INTEGER NOT NULL REFERENCES projects(id),
-    points INTEGER NOT NULL DEFAULT 0,
+    points NUMERIC(10,2) NOT NULL DEFAULT 0,
     PRIMARY KEY (project, id)
 );
 
@@ -104,8 +106,13 @@ FOR EACH ROW EXECUTE PROCEDURE notify_delete();
 
 CREATE TRIGGER pick_us_number BEFORE INSERT ON user_stories
 FOR EACH ROW EXECUTE PROCEDURE us_inc();
+CREATE TRIGGER pick_spr_number BEFORE INSERT ON sprints
+FOR EACH ROW EXECUTE PROCEDURE spr_inc();
 
 INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda enigne that finally works');
+
+INSERT INTO sprints (project, points) VALUES ((SELECT p.id FROM projects p WHERE p.title='Honda Works'), 10);
+INSERT INTO sprints (project, points) VALUES ((SELECT p.id FROM projects p WHERE p.title='Honda Works'), 4);
 
 INSERT INTO user_stories (feature, logs, project) VALUES ('Create Engine Block', 'Get help from Mercedes maybe', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
 INSERT INTO user_stories (feature, logs, project) VALUES ('Add Turbo', 'Reliable please !', (SELECT p.id FROM projects p WHERE p.title='Honda Works'));
