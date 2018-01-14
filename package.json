@@ -1,31 +1,33 @@
 {
+  "productName": "Scrum Assistant",
   "name": "scrum-assistant",
-  "version": "0.0.1",
-  "description": "",
-  "main": "app.js",
-  "scripts": {
-    "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "debug": "electron --inspect=5858 app.js"
-  },
+  "description": "An app that helps to apply Scrum to your project.",
   "author": "Sébastien Viguier",
   "license": "MIT",
+  "version": "0.0.1",
+  "main": "app.js",
   "dependencies": {
     "async": "^2.5.0",
     "bootstrap": "^4.0.0-beta.2",
     "decimal.js": "^9.0.1",
     "dragula": "^3.7.2",
-    "electron-twig": "^1.1.1",
     "jquery": "^3.2.1",
     "jquery-validation": "^1.17.0",
-    "node-notifier": "^5.1.2",
     "pg": "^7.3.0",
     "photon": "git+https://github.com/connors/photon.git",
-    "popper.js": "^1.12.6",
-    "socket.io": "^2.0.4"
+    "popper.js": "^1.12.6"
   },
   "devDependencies": {
     "electron": "^1.7.9",
+    "electron-packager": "^10.1.1",
     "uglifyify": "^4.0.5"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "debug": "electron --inspect=5858 app.js",
+    "package-win": "electron-packager . scrum-assistant --overwrite --asar=true
+                    --platform=win32 --arch=ia32 --icon=scrum.ico --prune=true
+                    --out=release-builds --version-string.ProductName=\"Scrum Assistant\""
   }
 }
