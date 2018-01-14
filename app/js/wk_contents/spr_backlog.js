@@ -1,12 +1,25 @@
+/**
+ * @file spr_backlog.js
+ * Js file for the sprint backlog module
+ * @author Sébastien Viguier
+ */
 'use strict';
-let drake = null, del_sprints = [], window_height = 0;
+let drake = null; //The drag and drop system
+let window_height = 0; //The height of the window
 
 $(document).ready(($)=>{
     $("#spr_us").data('spr_id', -1);
-    window_height = $(window).height();
+    window_height = $(window).height(); //Gets the height of the window
 
-    ipcRenderer.send("fetch", {type:"user_stories"});
+    ipcRenderer.send("fetch", {type:"user_stories"});//Asks to fetch the user_stories
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on fetched event
+     * @listens ipcRenderer#fetched
+     * @param event - The event
+     * @param args - Parameters of the event
+     */
     ipcRenderer.on("fetched", (event, args) => {
         if(!(args.ret || ~asked_fetch['spr_backlog'].indexOf(args.type))){
             switch(args['type']){
@@ -22,6 +35,13 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on created event
+     * @listens ipcRenderer#created
+     * @param event - The event
+     * @param args - Parameters of the event
+     */
     ipcRenderer.on('created', (event, args)=>{
         if(args.err && args.kind === "sprint"){
             dialog.showMessageBox({title: "Scrum Assistant",
@@ -32,6 +52,13 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on insert event
+     * @listens ipcRenderer#insert
+     * @param event - The event
+     * @param args - Parameters of the event
+     */
     ipcRenderer.on('insert', (event, args) =>{
         if(args.type === "sprints" && $("#spr_"+args.data.id).length === 0){
             fill_sprint(args.data);
@@ -42,6 +69,13 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on delete event
+     * @listens ipcRenderer#delete
+     * @param event - The event
+     * @param args - Parameters of the event
+     */
     ipcRenderer.on('delete', (event, args) =>{
         if(args.type === "sprints"){
             for(let us of $("#spr_"+args.data.id).find('.spr_user_story')){
@@ -51,6 +85,13 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on update event
+     * @listens ipcRenderer#update
+     * @param event - The event
+     * @param args - Parameters of the event
+     */
     ipcRenderer.on('update', (event, args)=>{
         if(args.type === "user_stories"){
             if($('#spr_us'+args.data.id).length === 0){
@@ -93,18 +134,41 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on error event
+     * @listens ipcRenderer#error
+     * @param event - The event
+     * @param args - Parameters of the event
+     */
     ipcRenderer.on('error', (event, args) =>{
         console.error(args);
     })
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on resizing window.
+       Updates the window_height variable.
+     * @listens window:resize
+     */
     $(window).resize(()=>{
         window_height = $(window).height();
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on click on create sprint button
+     * @listens #create_sp:resize
+     */
     $('#create_sp').on('click', ()=>{
         ipcRenderer.send('create', {type: "sprint", data:{project:project_id}});
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on click on delete sprint button
+     * @listens #delete_sp:resize
+     */
     $('#delete_sp').on('click', ()=>{
         let items = $(".pj_spr:not(#spr_us)");
         if(items.length !== 0){
@@ -112,6 +176,11 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function fill_all_sprint_us
+     * @description Inserts all the user stories by calling fill_sprint_us
+     * @see fill_sprint_us
+     */
     function fill_all_sprint_us(){
         let us = remote.getGlobal('data').user_stories;
         for(i in us){
@@ -119,6 +188,11 @@ $(document).ready(($)=>{
         }
     }
 
+    /**
+     * @function fill_sprint_us
+     * @description Inserts a user story
+     * @param us - The data of the user story
+     */
     function fill_sprint_us(us){
         let html = `<div class="col-xl-6 spr_user_story d-flex flex-row justify-content-around rounded" id="spr_us${us.id}">
                         <p>US#${us.id} <small class="text-muted">Estimated: ${parseFloat(us.estimate)}</small></p>
@@ -133,6 +207,11 @@ $(document).ready(($)=>{
         assign_us_to_sprint($('#spr_us'+us.id), us.sprint, false);
     }
 
+    /**
+     * @function fill_all_sprints
+     * @description Inserts all the sprints by calling fill_sprint
+     * @see fill_sprint
+     */
     function fill_all_sprints(){
         let sprints = remote.getGlobal('data').sprints;
         for(i in sprints){
@@ -140,6 +219,11 @@ $(document).ready(($)=>{
         }
     }
 
+    /**
+     * @function fill_sprint
+     * @description Inserts a sprint
+     * @param sprint - The data of the sprint
+     */
     function fill_sprint(sprint){
         let html = `
             <div class="card pj_spr" id="spr_${sprint.id}">
@@ -187,6 +271,12 @@ $(document).ready(($)=>{
         drake.containers.push($('#spr_'+sprint.id).find('.spr_us_container')[0]);
     }
 
+    /**
+     * @function handle_edit
+     * @description Handles the click on an "Edit" button
+     * @param item - The html node of the user story
+     * @fires ipcMain#update
+     */
     function handle_edit(item){
         let btn = item.find('#spr_total_edit');
         if(btn.text() === "Edit"){
@@ -219,6 +309,11 @@ $(document).ready(($)=>{
         });
     }
 
+    /**
+     * @function handle_edit
+     * @description Handles the click on a "Cancel" button
+     * @param item - The html node of the user story
+     */
     function handle_cancel(item){
         item.find('#spr_total_edit').text('Edit');
         item.find('#spr_total_cancel').prop("disabled", true);
@@ -230,6 +325,12 @@ $(document).ready(($)=>{
                                         .prop("disabled", true);
     }
 
+    /**
+     * @function init_containers
+     * @description Initializes the drag and drop containers and the drag events
+     * @listens drake:drop
+     * @listens document:mousemove
+     */
     function init_containers(){
         drake = dragula({
             accepts: (el, target, source, sibling) => {
@@ -260,6 +361,14 @@ $(document).ready(($)=>{
         });
     }
 
+    /**
+     * @function assign_us_to_sprint
+     * @description Assigns a user story to a sprint or to the default container
+     * @param item - The html node of the user story
+     * @param sprint - The index of the target sprint
+     * @param update - True if the assignment needs a user story update
+     * @param source - The id of the source sprint
+     */
     function assign_us_to_sprint(item, sprint, update, source="#spr_us"){
         let target = (sprint === -1)?$("#spr_us"):$("#spr_"+sprint).find('.spr_us_container');
         let new_source = (source === "#spr_us")?$(source):$(source).find('.spr_us_container');
@@ -267,6 +376,14 @@ $(document).ready(($)=>{
         update_points(item, target, new_source, update);
     }
 
+    /**
+     * @function update_points
+     * @description Update the points of the source and target sprint while moving a user story
+     * @param el - The html node of the user story
+     * @param target - The html node of the target sprint container
+     * @param source - The html node of the source sprint container
+     * @param update - True if the assignment needs a user story update
+     */
     function update_points(el, target, source, update){
         if(!$(target).is($(source)) && $(target).has($(el))){
             let item = null, new_sp = -1;

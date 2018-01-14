@@ -1,4 +1,5 @@
 /**
+ * @file app.js
  * Main electron js file
  * @description Defines the actions on app start
  * @author Sébastien Viguier
@@ -14,7 +15,7 @@ const async = require('async');
  */
 let db = require('./db/config.js');
 
-let mainWindow = null;
+let mainWindow = null; //The window being shown to the user
 
 /**
  * Initial state of the data
@@ -36,8 +37,11 @@ global.loaded = {
 };
 
 /**
- * Main function of the app
- * Connects to the database and loads the GUI.
+ * @function
+ * @description Main function of the app.
+   Connects to the database and loads the GUI.
+ * @listens app#ready
+ * @listens mainWindow#dom-ready
  */
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
@@ -98,8 +102,10 @@ function help_init(callback){
 }
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour on action event
- * @event ipcMain#action
+ * @listens  ipcMain#action
+ * @param event - The event
  * @param args - Parameters of the event
  */
 ipcMain.on("action", (event, args) => {
@@ -113,8 +119,9 @@ ipcMain.on("action", (event, args) => {
 })
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour when exiting the application
- * @event electron#will-quit
+ * @listens app#will-quit
  */
 app.once('will-quit', ()=>{
     db.disconnect();

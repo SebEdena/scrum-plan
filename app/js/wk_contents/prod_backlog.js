@@ -1,4 +1,5 @@
 /**
+ * @file prod_backlog.js
  * Js file for the product backlog module
  * @author Sébastien Viguier
  */
@@ -8,12 +9,14 @@ let us_update = {}; //Array of sprints containing user stories to be update afte
 let us_sprint_update = []; //Array of user stories to be updated once removed from sprint
 
 $(document).ready(($)=>{
-    ipcRenderer.send("fetch", {type:"user_stories"});
+    ipcRenderer.send("fetch", {type:"user_stories"});//Asks to fetch the user_stories
 
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on fetched event
      * @listens ipcRenderer#fetched
+     * @param event - The event
+     * @param args - Parameters of the event
      */
     ipcRenderer.on("fetched", (event, args) => {
         if(!(args.ret || ~asked_fetch['prod_backlog'].indexOf(args.type))){
@@ -29,6 +32,8 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour on created event
      * @listens ipcRenderer#created
+     * @param event - The event
+     * @param args - Parameters of the event
      */
     ipcRenderer.on("created", (event, args) => {
         if(args.kind === "us"){
@@ -61,6 +66,8 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour on update event
      * @listens ipcRenderer#update
+     * @param event - The event
+     * @param args - Parameters of the event
      */
     ipcRenderer.on('update', (event, args) => {
         if(args.type === "user_stories"){
@@ -87,6 +94,8 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour on delete event
      * @listens ipcRenderer#delete
+     * @param event - The event
+     * @param args - Parameters of the event
      */
     ipcRenderer.on('delete', (event, args) => {
         if(args.type === "user_stories"){
@@ -96,8 +105,10 @@ $(document).ready(($)=>{
 
     /**
      * @function
-     * @description EVENT HANDLER - Defines behaviour on delete event
-     * @listens ipcRenderer#delete
+     * @description EVENT HANDLER - Defines behaviour on insert event
+     * @listens ipcRenderer#insert
+     * @param event - The event
+     * @param args - Parameters of the event
      */
     ipcRenderer.on('insert', (event, args) =>{
         if(args.type === "user_stories" && $('#us'+args.data.id).length === 0){
@@ -109,6 +120,8 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour on error event
      * @listens ipcRenderer#error
+     * @param event - The event
+     * @param args - Parameters of the event
      */
     ipcRenderer.on('error', (event, args) => {
         if(args.type === "us"){

@@ -1,4 +1,5 @@
 /**
+ * @file home.js
  * Js file for the homepage
  * @author Sébastien Viguier
  */
@@ -8,12 +9,14 @@ const remote = require('electron').remote;
 const {dialog} = remote.require('electron');
 
 $(document).ready(($)=>{
-    ipcRenderer.send("fetch", {type:"projects"});
+    ipcRenderer.send("fetch", {type:"projects"}); //Asks to fetch the projects
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour on fetched item event
        and calls load_projects function
-     * @event ipcRenderer#fetched
+     * @listens ipcRenderer#fetched
+     * @param event - The event
      * @param args - Parameters of the event
      * @see load_projects
      */
@@ -27,25 +30,28 @@ $(document).ready(($)=>{
     });
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour after click on open button
-     * @event #open:click
+     * @listens #open:click
      */
     $("#open").on("click", ()=>{
         $("#modal_open_project").modal("show");
     });
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour after click on create button
-     * @event #create:click
+     * @listens #create:click
      */
     $("#create").on("click", ()=>{
         $("#modal_create_project").modal("show");
     });
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour after modal_create_project
        being hidden. Clears the inputs of the modal
-     * @event #modal_create_project:hidden.bs.modal
+     * @listens #modal_create_project:hidden.bs.modal
      * @see Bootstrap documentation
      */
     $("#modal_create_project").on("hidden.bs.modal", ()=>{
@@ -53,9 +59,11 @@ $(document).ready(($)=>{
     });
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour after submitting
        create_pj_form form.
-     * @event #create_pj_form:submit
+     * @param e - The event
+     * @listens #create_pj_form:submit
      * @fires ipcMain#create
      */
     $("#create_pj_form").on("submit", (e)=>{
@@ -68,9 +76,12 @@ $(document).ready(($)=>{
     });
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour after receiving insert
        event from ipcMain
-     * @event ipcRenderer#insert
+     * @listens ipcRenderer#insert
+     * @param event - The event
+     * @param args - Parameters of the event
      * @see insert_project
      */
     ipcRenderer.on("insert", (event, args) => {
@@ -83,9 +94,12 @@ $(document).ready(($)=>{
     });
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour after receiving update
        event from ipcMain
-     * @event ipcRenderer#update
+     * @listens ipcRenderer#update
+     * @param event - The event
+     * @param args - Parameters of the event
      * @see update_project
      */
     ipcRenderer.on("update", (event, args) => {
@@ -95,9 +109,12 @@ $(document).ready(($)=>{
     });
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour after receiving created
        event from ipcMain
-     * @event ipcRenderer#created
+     * @listens ipcRenderer#created
+     * @param event - The event
+     * @param args - Parameters of the event
      * @see pj_msg
      */
     ipcRenderer.on("created", (event, args) => {

@@ -1,4 +1,5 @@
 /**
+ * @file loading.js
  * Js file for the loading screen
  * @author Sébastien Viguier
  */
@@ -12,9 +13,11 @@ $(document).ready(($)=>{
     $('#spinner').css('visibility', 'visible');
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour on error event to check
        for any connection error with the database.
-     * @event ipcRenderer#error
+     * @listens ipcRenderer#error
+     * @param event - The event
      * @param args - Parameters of the event
      * @fires ipcMain#action to quit or reconnect the app with the database
      */

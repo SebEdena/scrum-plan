@@ -1,4 +1,5 @@
 /**
+ * @file global.js
  * Global javascript file for utilitary methods
  * @author Sébastien Viguier
  */

@@ -1,4 +1,5 @@
 /**
+ * @file workspace.js
  * Js file for the workspace
  * @author Sébastien Viguier
  */
@@ -15,8 +16,10 @@ $(document).ready(($) => {
     ipcRenderer.send("load", {type:"sprints"}); //asks to load the sprints
 
     /**
+     * @function
      * @description EVENT HANDLER - Defines behaviour on loaded data event
-     * @event ipcRenderer#loaded
+     * @listens ipcRenderer#loaded
+     * @param event - The event
      * @param args - Parameters of the event
      */
     ipcRenderer.on("loaded", (event, args) => {
@@ -126,6 +129,7 @@ $(document).ready(($) => {
      * @description EVENT HANDLER - Defines behaviour on click on nav and tab.
        Toggles the switch of tab
      * @listens nav-group-item:click&tab-item:click
+     * @param e - The event
      * @see switch_tab
      */
     $(".nav-group-item, .tab-item").on('click', function(e){
@@ -137,6 +141,7 @@ $(document).ready(($) => {
      * @description EVENT HANDLER - Defines behaviour on click on tab close icon.
        Toggles closure of tab
      * @listens icon-close-tab:click
+     * @param e - The event
      * @see close
      */
     $(".icon-close-tab").on('click', (e) => {

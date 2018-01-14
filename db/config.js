@@ -1,4 +1,5 @@
 /**
+ * @file config.js
  * Module for datbase handling
  * @author Sébastien Viguier
  * @module config.js
@@ -245,8 +246,10 @@ function send_delete(args, callback){
 }
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour on create item event
- * @event ipcMain#create
+ * @listens ipcMain#create
+ * @param event - The event
  * @param args - Parameters of the event
  * @fires ipcRenderer#created
  * @see create
@@ -269,8 +272,10 @@ ipcMain.on("create", (event, args) => {
 });
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour on open project event
- * @event ipcMain#open_project
+ * @listens ipcMain#open_project
+ * @param event - The event
  * @param args - Parameters of the event
  */
 ipcMain.on("open_project", (event, args)=>{
@@ -284,8 +289,10 @@ ipcMain.on("open_project", (event, args)=>{
 });
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour on fetch data event
- * @event ipcMain#fetch
+ * @listens ipcMain#fetch
+ * @param event - The event
  * @param args - Parameters of the event
  * @fires ipcRenderer#fetched
  * @see fetch
@@ -297,8 +304,10 @@ ipcMain.on("fetch", (event, args) => {
 });
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour on load data event
- * @event ipcMain#load
+ * @listens ipcMain#load
+ * @param event - The event
  * @param args - Parameters of the event
  * @fires ipcRenderer#loaded
  * @see load
@@ -310,8 +319,10 @@ ipcMain.on("load", (event, args) => {
 });
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour on update data event
- * @event ipcMain#update
+ * @listens ipcMain#update
+ * @param event - The event
  * @param args - Parameters of the event
  * @fires ipcRenderer#error
  * @see send_update
@@ -329,8 +340,10 @@ ipcMain.on('update', (event, args) => {
 });
 
 /**
+ * @function
  * @description EVENT HANDLER - Defines behaviour on delete data event
- * @event ipcMain#delete
+ * @listens ipcMain#delete
+ * @param event - The event
  * @param args - Parameters of the event
  * @fires ipcRenderer#error
  * @see send_delete
@@ -348,7 +361,7 @@ ipcMain.on('delete', (event, args) => {
 });
 
 /**
- * All the function that will be exported from the module
+ * All the functions that will be exported from the module
  */
 module.exports = {
 
