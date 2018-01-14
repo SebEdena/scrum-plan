@@ -1,3 +1,8 @@
+/**
+ * Js file for the homepage
+ * @author Sébastien Viguier
+ */
+'use strict';
 const {ipcRenderer} = require('electron');
 const remote = require('electron').remote;
 const {dialog} = remote.require('electron');
@@ -5,6 +10,13 @@ const {dialog} = remote.require('electron');
 $(document).ready(($)=>{
     ipcRenderer.send("fetch", {type:"projects"});
 
+    /**
+     * @description EVENT HANDLER - Defines behaviour on fetched item event
+       and calls load_projects function
+     * @event ipcRenderer#fetched
+     * @param args - Parameters of the event
+     * @see load_projects
+     */
     ipcRenderer.on("fetched", (event, args) => {
         if(!args.ret){
             switch(args['type']){
@@ -14,19 +26,39 @@ $(document).ready(($)=>{
         }
     });
 
-    $("#open").on("click", function(){
+    /**
+     * @description EVENT HANDLER - Defines behaviour after click on open button
+     * @event #open:click
+     */
+    $("#open").on("click", ()=>{
         $("#modal_open_project").modal("show");
     });
 
-    $("#create").on("click", function(){
+    /**
+     * @description EVENT HANDLER - Defines behaviour after click on create button
+     * @event #create:click
+     */
+    $("#create").on("click", ()=>{
         $("#modal_create_project").modal("show");
     });
 
-    $("#modal_create_project").on("hidden.bs.modal", function(){
+    /**
+     * @description EVENT HANDLER - Defines behaviour after modal_create_project
+       being hidden. Clears the inputs of the modal
+     * @event #modal_create_project:hidden.bs.modal
+     * @see Bootstrap documentation
+     */
+    $("#modal_create_project").on("hidden.bs.modal", ()=>{
         $("#create_pj_form").find('textarea,input').val('');
     });
 
-    $("#create_pj_form").on("submit", function(e){
+    /**
+     * @description EVENT HANDLER - Defines behaviour after submitting
+       create_pj_form form.
+     * @event #create_pj_form:submit
+     * @fires ipcMain#create
+     */
+    $("#create_pj_form").on("submit", (e)=>{
         e.preventDefault();
         let data = {};
         data['title'] = $("#input_pj_name").val();
@@ -35,6 +67,12 @@ $(document).ready(($)=>{
         $("#modal_create_project").modal("hide");
     });
 
+    /**
+     * @description EVENT HANDLER - Defines behaviour after receiving insert
+       event from ipcMain
+     * @event ipcRenderer#insert
+     * @see insert_project
+     */
     ipcRenderer.on("insert", (event, args) => {
         switch (String(args['type'])){
             case "projects": insert_project(args.data);
@@ -44,16 +82,32 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @description EVENT HANDLER - Defines behaviour after receiving update
+       event from ipcMain
+     * @event ipcRenderer#update
+     * @see update_project
+     */
     ipcRenderer.on("update", (event, args) => {
         if(args.type === 'projects'){
             update_project(args.data.id);
         }
     });
 
+    /**
+     * @description EVENT HANDLER - Defines behaviour after receiving created
+       event from ipcMain
+     * @event ipcRenderer#created
+     * @see pj_msg
+     */
     ipcRenderer.on("created", (event, args) => {
         pj_msg(args);
     });
 
+    /**
+     * @function load_projects
+     * @description Loads the list of projects into the modal_open_project modal
+     */
     function load_projects(){
         let projects = remote.getGlobal("data")['projects'];
         $("#html_open_project").html("");
@@ -66,12 +120,23 @@ $(document).ready(($)=>{
         }
     }
 
+    /**
+     * @function update_project
+     * @description Updates the project with the given index number
+     * @param index - The index of the project
+     */
     function update_project(index){
         let pj = remote.getGlobal("data")['projects'][index];
         $('#pj' + index).find('#title').text(pj.title);
         $('#pj' + index).find('#desc').text(pj.description);
     }
 
+    /**
+     * @function insert_project
+     * @description Inserts a new project
+     * @param data - The data of the project
+     * @fires ipcMain#open_project
+     */
     function insert_project(data){
         var div = $.parseHTML(`
             <div class="row mt-3 project" id='pj${data.id}'>
@@ -92,6 +157,13 @@ $(document).ready(($)=>{
             });
     }
 
+    /**
+     * @function pj_msg
+     * @description Displays a message for a created event status, whether the
+       project was successfully created or not.
+     * @param args - The data of the created event result
+     * @fires ipcMain#create
+     */
     function pj_msg(args){
         if(args.kind === "project"){
             if(args.status === "ok"){

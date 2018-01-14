@@ -435,6 +435,6 @@ module.exports = {
     }
 };
 
-let require = function(path) {
+var require = function(path) {
     return module.exports;
 };

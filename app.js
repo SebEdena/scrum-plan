@@ -4,7 +4,6 @@
  * @author Sébastien Viguier
  */
 'use strict';
-
 const {app, globalShortcut, ipcMain, dialog} = require('electron');
 const BrowserWindow = require("electron").BrowserWindow;
 const async = require('async');
@@ -16,7 +15,6 @@ const async = require('async');
 let db = require('./db/config.js');
 
 let mainWindow = null;
-let ready = false, displayed = false;
 
 /**
  * Initial state of the data
@@ -106,8 +104,6 @@ function help_init(callback){
  */
 ipcMain.on("action", (event, args) => {
     switch(args){
-        case "ready": ready = true;
-            break;
         case "reconnect": connect();
             break;
         case "quit": app.quit();

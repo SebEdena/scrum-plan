@@ -1,9 +1,20 @@
-let tmp_us = [], us_update = {}, us_sprint_update = [];
-const us_msg_limit = 50;
+/**
+ * Js file for the product backlog module
+ * @author Sébastien Viguier
+ */
+'use strict';
+let tmp_us = []; //Array of us not validated by the database yet
+let us_update = {}; //Array of sprints containing user stories to be update after sprint update
+let us_sprint_update = []; //Array of user stories to be updated once removed from sprint
 
 $(document).ready(($)=>{
     ipcRenderer.send("fetch", {type:"user_stories"});
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on fetched event
+     * @listens ipcRenderer#fetched
+     */
     ipcRenderer.on("fetched", (event, args) => {
         if(!(args.ret || ~asked_fetch['prod_backlog'].indexOf(args.type))){
             switch(args['type']){
@@ -14,6 +25,11 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on created event
+     * @listens ipcRenderer#created
+     */
     ipcRenderer.on("created", (event, args) => {
         if(args.kind === "us"){
             if(args.status === "ok"){
@@ -41,6 +57,11 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on update event
+     * @listens ipcRenderer#update
+     */
     ipcRenderer.on('update', (event, args) => {
         if(args.type === "user_stories"){
             if(us_sprint_update.indexOf(args.data.id) >= 0){
@@ -62,18 +83,33 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on delete event
+     * @listens ipcRenderer#delete
+     */
     ipcRenderer.on('delete', (event, args) => {
         if(args.type === "user_stories"){
             $('#us' + args.data.id).remove();
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on delete event
+     * @listens ipcRenderer#delete
+     */
     ipcRenderer.on('insert', (event, args) =>{
         if(args.type === "user_stories" && $('#us'+args.data.id).length === 0){
             fill_us(args.data);
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on error event
+     * @listens ipcRenderer#error
+     */
     ipcRenderer.on('error', (event, args) => {
         if(args.type === "us"){
             let msg = 'The US #' + args.data.id+ ' : \"' + args.data.feature;
@@ -88,6 +124,11 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on click event of create_us button
+     * @listens #create_us:click
+     */
     $('#create_us').on('click', () => {
         if($('#us_new').length !== 0){
             $('#us_new').find('input[name="feature"]').trigger('focus');
@@ -126,6 +167,11 @@ $(document).ready(($)=>{
         init_create($("#us_new"));
     });
 
+    /**
+     * @function fill_all_us
+     * @description Fills all user stories by calling fill_us
+     * @see fill_us
+     */
     function fill_all_us(){
         let us = remote.getGlobal('data').user_stories;
         for(let i in us){
@@ -133,6 +179,11 @@ $(document).ready(($)=>{
         }
     }
 
+    /**
+     * @function fill_us
+     * @description Fills a user story
+     * @param us - The data of the user story
+     */
     function fill_us(us){
         let html = `
             <div class="container user_story rounded" id="us${us.id}">
@@ -169,6 +220,12 @@ $(document).ready(($)=>{
         insert_us(us.id, $('#us' + us.id));
     }
 
+    /**
+     * @function init_create
+     * @description Initializes the events on a newly created user story
+     * @param item - The html node of the user story
+     * @fires ipcMain#create
+     */
     function init_create(item){
         item.find('input[name="feature"]').trigger('focus');
         item.find('#del').on('click', () => {
@@ -196,6 +253,11 @@ $(document).ready(($)=>{
         });
     }
 
+    /**
+     * @function init_events
+     * @description Initializes the events on existing user stories
+     * @param item - The html node of the user story
+     */
     function init_events(item){
         item.find('#del').on('click', () => {
             if(item.find('#del').text() === "Delete"){
@@ -240,6 +302,12 @@ $(document).ready(($)=>{
         });
     }
 
+    /**
+     * @function insert_us
+     * @description Inserts an us in the right position (order by user story id)
+     * @param id - The id of the user story
+     * @param us - The html node of the user story
+     */
     function insert_us(id, us){
         for (let item of $(".user_story:not(#us" + id + ")")){
             if(id < $(item).data('id')){
@@ -252,6 +320,12 @@ $(document).ready(($)=>{
         }
     }
 
+    /**
+     * @function validate_us
+     * @description Converts a temporary user story into a valid one
+     * @param item - The html node of the user story
+     * @param data - The data of the user story
+     */
     function validate_us(item, data){
         pop_tmp(data.tmp_ticket);
         insert_us(data.id, item);
@@ -265,6 +339,11 @@ $(document).ready(($)=>{
         item.find('#est').val(adjust_display(data.estimate));
     }
 
+    /**
+     * @function push_tmp
+     * @description Gives a temporary user story an index from the tmp_us array
+     * @returns {number} The index of where the user
+     */
     function push_tmp(){
         for(index in tmp_us){
             if(tmp_us[index] === false){
@@ -277,10 +356,21 @@ $(document).ready(($)=>{
         return index;
     }
 
+    /**
+     * @function pop_tmp
+     * @description Retrieves an index from the tmp_us array
+     * @param index - The index to be retrieved
+     */
     function pop_tmp(index){
         tmp_us[index] = false;
     }
 
+    /**
+     * @function ask_delete
+     * @description Asks the user a delete confirmation and deletes if asked
+     * @param item - The user story to be removed
+     * @param new_us - True if the us is still temporary
+     */
     function ask_delete(item, new_us){
         if(new_us){
             item.find("input, textarea, button").prop("disabled", true);
@@ -306,6 +396,13 @@ $(document).ready(($)=>{
         });
     }
 
+    /**
+     * @function verify_update_ok
+     * @description Checks if the update of a user story is valid, to prevent
+       edge case with sprint points
+     * @param item - The user story to be checked
+     * @returns {boolean} True if it is ok to update the user story
+     */
     function verify_update_ok(item){
         let current_us = remote.getGlobal('data').user_stories[item.data('id')];
         let us = remote.getGlobal('data').user_stories;
@@ -322,6 +419,13 @@ $(document).ready(($)=>{
         return diff.toNumber() >= 0;
     }
 
+    /**
+     * @function update_us
+     * @description Gather the data and sends update request for a user story
+     * @param item - The user story to updated
+     * @param form - The form of the user story
+     * @fires ipcMain#update
+     */
     function update_us(item, form){
         let data = {
             feature: form.feature.value,
@@ -333,17 +437,11 @@ $(document).ready(($)=>{
         ipcRenderer.send("update", {type: "us", data: data});
     }
 
-    function update_us(item, form){
-        let data = {
-            feature: form.feature.value,
-            logs: form.description.value,
-            estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
-            project: project_id,
-            id: item.data('id')
-        };
-        ipcRenderer.send("update", {type: "us", data: data});
-    }
-
+    /**
+     * @function us_est_overflow_resolve
+     * @description Asks the user how to resolve a edge case update of a user story
+     * @param item - The html node of the user story to updated
+     */
     function us_est_overflow_resolve(item){
         let us = remote.getGlobal('data').user_stories[item.data('id')];
         let sprint = remote.getGlobal('data').sprints[us.sprint];
@@ -363,6 +461,13 @@ $(document).ready(($)=>{
             });
     }
 
+    /**
+     * @function sprint_update_for_overflow
+     * @description Updates the sprint total point of a user story that has an estimate overflow
+     * @param us - The data of the user story
+     * @param sprint - The data of the sprint
+     * @fires ipcMain#update
+     */
     function sprint_update_for_overflow(us, sprint){
         if(!us_update.hasOwnProperty(sprint.id)){
             us_update[sprint.id] = [];
@@ -380,11 +485,23 @@ $(document).ready(($)=>{
         ipcRenderer.send('update', {type: "sprint", data: data});
     }
 
+    /**
+     * @function revert_us_points
+     * @description Reverts the estimate of a user story
+     * @param us - The data of the user story
+     */
     function revert_us_points(us){
         $('#us'+us.id).find('#est').val(parseFloat(us.estimate));
         $('#us'+us.id).find("button").prop("disabled", false);
     }
 
+    /**
+     * @function remove_us_sprint
+     * @description Removes an us from the sprint when its estimate overflows
+     * @param us - The data of the user story
+     * @param sprint - The data of the sprint
+     * @fires ipcMain#update
+     */
     function remove_us_sprint(us, sprint){
         us_sprint_update.push(us.id);
         ipcRenderer.send("update", {type:"us_sprint",

@@ -1,5 +1,6 @@
 /**
  * Brings the modules for front-end with browserify
+ * @see app/js/bundle.js
  * @author Sébastien Viguier
  */
 const $ = require('jquery');

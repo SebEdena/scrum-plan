@@ -1,7 +1,16 @@
-const path = require('path');
-let hideInProgress = false;
-let showModalId = '';
+/**
+ * Global javascript file for utilitary methods
+ * @author Sébastien Viguier
+ */
+'use strict';
+let hideInProgress = false; //Checks if the hide modal is in progress
+let showModalId = ''; //Id of the modal being shown
 
+/**
+ * @function showModal
+ * @description Shows a modal on GUI
+ * @param elementId - The id of the html modal
+ */
 function showModal(elementId) {
     if (hideInProgress) {
         showModalId = elementId;
@@ -10,6 +19,11 @@ function showModal(elementId) {
     }
 }
 
+/**
+ * @function hideModal
+ * @description Hides a modal on GUI
+ * @param elementId - The id of the html modal
+ */
 function hideModal(elementId) {
     hideInProgress = true;
     $("#" + elementId).on('hidden.bs.modal', hideCompleted);
@@ -25,6 +39,11 @@ function hideModal(elementId) {
     }
 }
 
+/**
+ * @function adjust_display
+ * @description Converts a string number to be more accurate with dots and commas
+ * @returns {string} The converted number
+ */
 function adjust_display(data){
     return parseFloat(data).toString().replace(',', '.');
 }

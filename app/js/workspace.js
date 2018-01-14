@@ -1,26 +1,42 @@
+/**
+ * Js file for the workspace
+ * @author Sébastien Viguier
+ */
+'use strict';
 const {ipcRenderer} = require('electron');
 const remote = require('electron').remote;
 const {dialog} = remote.require('electron');
-let project_id = remote.getGlobal('data').current.id;
-let scroll_state = {};
-let asked_fetch = {};
+let project_id = remote.getGlobal('data').current.id; //id of the opened project
+let scroll_state = {}; //Store the scroll of each module to keep it for reopening the module
+let asked_fetch = {}; //Lists all the fetched modules
 
 $(document).ready(($) => {
-    ipcRenderer.send("load", {type:"user_stories"});
-    ipcRenderer.send("load", {type:"sprints"});
+    ipcRenderer.send("load", {type:"user_stories"}); //asks to load the user stories
+    ipcRenderer.send("load", {type:"sprints"}); //asks to load the sprints
 
+    /**
+     * @description EVENT HANDLER - Defines behaviour on loaded data event
+     * @event ipcRenderer#loaded
+     * @param args - Parameters of the event
+     */
     ipcRenderer.on("loaded", (event, args) => {
         if(args.ret){
             console.error("Cannot load " + args.type);
         }
     });
 
+    /**
+     * @function switch_tab
+     * @description Switches between module tabs
+     * @param source - The html node which is the clicked tab
+     * @see focus
+     */
     function switch_tab(source){
       if($(source).prop("id") === $(".nav-group-item.active").prop("id") &&
           $(".tab-item").length !== 0){
         return;
       }
-      var tab = $(".tab-item[id=" + $(source).prop("id") + "]");
+      let tab = $(".tab-item[id=" + $(source).prop("id") + "]");
       if($(tab).length !== 0){
         focus(tab);
       } else {
@@ -42,6 +58,12 @@ $(document).ready(($) => {
         }
     }
 
+    /**
+     * @function focus
+     * @description Changes the active tab
+     * @param elt - The html node which is the new active tab
+     * @see switch_tab
+     */
     function focus(elt){
         scroll_state[$(".nav-group-item.active").prop('id')] = $(".pane").scrollTop();
         $(".active").removeClass("active");
@@ -57,14 +79,23 @@ $(document).ready(($) => {
         toggle($(elt).prop('id'));
     }
 
+    /**
+     * @function toggle
+     * @description Changes the active page
+     * @param elt - The html node which is the new active page
+     */
     function toggle(elt){
         $(".content-page").toggle(false);
         $(".content-page[id=" + elt + "]").toggle(true);
         $(".pane").scrollTop(scroll_state[elt]);
     }
 
+    /**
+     * @function close
+     * @description Closes a module tab
+     * @param elt - The html node which is the tab to be removed
+     */
     function close(elt){
-        //do_sth to check data
         if($(".tab-item").length > 1){
             if($(".tab-item").index(elt) === 0){
                 switch_tab($(".tab-item")[1]);
@@ -76,6 +107,11 @@ $(document).ready(($) => {
         elt.remove();
     }
 
+    /**
+     * @function handle_scroll
+     * @description Ensure the tabs stay on the top
+     * @param item - The html node of the tab group
+     */
     function handle_scroll(item){
         let screen_position = $(".pane").scrollTop();
         if(screen_position > item.scrollTop()){
@@ -85,15 +121,35 @@ $(document).ready(($) => {
         }
     }
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on click on nav and tab.
+       Toggles the switch of tab
+     * @listens nav-group-item:click&tab-item:click
+     * @see switch_tab
+     */
     $(".nav-group-item, .tab-item").on('click', function(e){
         switch_tab($(this));
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on click on tab close icon.
+       Toggles closure of tab
+     * @listens icon-close-tab:click
+     * @see close
+     */
     $(".icon-close-tab").on('click', (e) => {
         e.stopPropagation();
         close($(e.target).parent());
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on page pane scroll
+     * @listens pane:scroll
+     * @see handle_scroll
+     */
     $(".pane").on('scroll', function(){
         handle_scroll($('.tab-group:first'));
     });

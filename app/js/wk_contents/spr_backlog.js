@@ -1,3 +1,4 @@
+'use strict';
 let drake = null, del_sprints = [], window_height = 0;
 
 $(document).ready(($)=>{
