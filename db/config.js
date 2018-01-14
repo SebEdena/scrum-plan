@@ -1,8 +1,13 @@
+/**
+ * Module for datbase handling
+ * @author Sébastien Viguier
+ * @module config.js
+ */
 'use strict';
-const pg = require('pg');
-const fs = require('fs');
+const pg = require('pg'); //Postgres for node.js
+const fs = require('fs'); //File system : read/write
 const {ipcMain, dialog} = require('electron');
-const connPath = './db/settings_offline.json';
+const connPath = './db/settings_offline.json'; //File of db credentials
 const credentialsRules = {
     properties: ['user', 'password', 'host', 'port', 'database']
 };
@@ -11,6 +16,11 @@ let connectionSettings = null;
 
 let client = null, view = null, channel_send = null, app = null;
 
+/**
+ * @function init_client
+ * @description Initializes the client that will connect to the database
+ * @param callback - The callback that will be called at the end
+ */
 function init_client(callback){
     client = new pg.Client(connectionSettings);
     client.on('error', (err) => {
@@ -31,6 +41,13 @@ function init_client(callback){
     callback(null);
 }
 
+/**
+ * @function fetch
+ * @description Asks to load a particular type of object from database.
+ * If it is already loaded, it does not do anything but calling the callback
+ * @param type - The type of data that needs to be fetched
+ * @param cb - The callback that will be called at the end
+ */
 function fetch(type, cb){
     if(!global.loaded[type]){
         load(type, (err)=>{
@@ -41,6 +58,12 @@ function fetch(type, cb){
     }
 }
 
+/**
+ * @function load
+ * @description Load a particular type of object from database
+ * @param type - The type of data that needs to be loaded
+ * @param cb - The callback that will be called at the end
+ */
 function load(type, cb){
     let query = null;
     switch (type) {
@@ -76,6 +99,13 @@ function load(type, cb){
     }
 }
 
+/**
+ * @function create
+ * @description Inserts a new row in the database corresponding to an object
+ * @param type - The type of data that needs to be inserted
+ * @param data - The data to be inserted
+ * @param callback - The callback that will be called at the end
+ */
 function create(type, data, callback){
     let query = null;
     switch(type){
@@ -107,6 +137,15 @@ function create(type, data, callback){
     });
 }
 
+/**
+ * @function dispatch_action
+ * @description Makes a decision when the real time system receives a notification
+ * @param item - The item concerned by the notification
+ * @param type - The type of the concerned item
+ * @param action - The action to be performed
+ * @param callback - The callback that will be called at the end
+ * @see init_realtime
+ */
 function dispatch_action(item, type, action, callback){
     if(action === "insert" || action === "update"){
         update_item(item, type, ()=>{
@@ -120,11 +159,25 @@ function dispatch_action(item, type, action, callback){
     }
 }
 
+/**
+ * @function update_item
+ * @description Updates or inserts a specific item in the global.data JSON array
+ * @param item - The item to be updated or inserted
+ * @param type - The type of the item
+ * @param callback - The callback that will be called at the end
+ */
 function update_item(item, type, callback){
     global.data[type][item[0][type].id] = item[0][type];
     callback(null);
 };
 
+/**
+ * @function delete_item
+ * @description Deletes a specific item in the global.data JSON array
+ * @param item - The item to be deleted
+ * @param type - The type of the item
+ * @param callback - The callback that will be called at the end
+ */
 function delete_item(item, type, callback){
     if(global.data[type].hasOwnProperty(item[0][type].id)){
         delete global.data[type][item[0][type].id];
@@ -132,6 +185,12 @@ function delete_item(item, type, callback){
     callback();
 }
 
+/**
+ * @function send_update
+ * @description Sends an update query to the database
+ * @param args - The type and data of the object to be updated
+ * @param callback - The callback that will be called at the end
+ */
 function send_update(args, callback){
     let query = null, column = null;
     switch(args.type){
@@ -158,6 +217,12 @@ function send_update(args, callback){
     });
 }
 
+/**
+ * @function send_delete
+ * @description Sends an delete query to the database
+ * @param args - The type and data of the object to be deleted
+ * @param callback - The callback that will be called at the end
+ */
 function send_delete(args, callback){
     let query = null, column = null;
     switch(args.type){
@@ -179,6 +244,13 @@ function send_delete(args, callback){
     });
 }
 
+/**
+ * @description EVENT HANDLER - Defines behaviour on create item event
+ * @event ipcMain#create
+ * @param args - Parameters of the event
+ * @fires ipcRenderer#created
+ * @see create
+ */
 ipcMain.on("create", (event, args) => {
     let obj = {data: args['data'],
                kind: args['type'],
@@ -196,6 +268,11 @@ ipcMain.on("create", (event, args) => {
     });
 });
 
+/**
+ * @description EVENT HANDLER - Defines behaviour on open project event
+ * @event ipcMain#open_project
+ * @param args - Parameters of the event
+ */
 ipcMain.on("open_project", (event, args)=>{
     for(let i in global.data['projects']){
         if(args.id === global.data['projects'][i].id){
@@ -203,22 +280,42 @@ ipcMain.on("open_project", (event, args)=>{
             break;
         }
     }
-    //PJ not found ?
     view.loadURL('file://' + __dirname + '/../app/html/workspace.html');
 });
 
+/**
+ * @description EVENT HANDLER - Defines behaviour on fetch data event
+ * @event ipcMain#fetch
+ * @param args - Parameters of the event
+ * @fires ipcRenderer#fetched
+ * @see fetch
+ */
 ipcMain.on("fetch", (event, args) => {
     fetch(args.type, (err) => {
         channel_send.send("fetched", {type: args.type, ret: err});
     });
 });
 
+/**
+ * @description EVENT HANDLER - Defines behaviour on load data event
+ * @event ipcMain#load
+ * @param args - Parameters of the event
+ * @fires ipcRenderer#loaded
+ * @see load
+ */
 ipcMain.on("load", (event, args) => {
     load(args.type, (err) => {
         channel_send.send("loaded", {type: args.type, ret: err});
     });
 });
 
+/**
+ * @description EVENT HANDLER - Defines behaviour on update data event
+ * @event ipcMain#update
+ * @param args - Parameters of the event
+ * @fires ipcRenderer#error
+ * @see send_update
+ */
 ipcMain.on('update', (event, args) => {
     send_update(args, res => {
         if(res){
@@ -231,6 +328,13 @@ ipcMain.on('update', (event, args) => {
     });
 });
 
+/**
+ * @description EVENT HANDLER - Defines behaviour on delete data event
+ * @event ipcMain#delete
+ * @param args - Parameters of the event
+ * @fires ipcRenderer#error
+ * @see send_delete
+ */
 ipcMain.on('delete', (event, args) => {
     send_delete(args, res => {
         if(res){
@@ -243,7 +347,16 @@ ipcMain.on('delete', (event, args) => {
     });
 });
 
+/**
+ * All the function that will be exported from the module
+ */
 module.exports = {
+
+    /**
+     * @function verify_credentials
+     * @description Checks that the given database credentials are correct
+     * @param callback - The callback that will be called at the end
+     */
     verify_credentials: function(callback){
         fs.readFile(connPath, (err, data) => {
             if (err) callback(err);
@@ -262,6 +375,13 @@ module.exports = {
         });
     },
 
+    /**
+     * @function init
+     * @description Initializes the module
+     * @param front - The BrowserWindow instance of the application (GUI object)
+     * @param appli - Instance of the app object
+     * @param callback - The callback that will be called at the end
+     */
     init: function(front, appli, callback){
         view = front;
         channel_send = front.webContents;
@@ -271,6 +391,11 @@ module.exports = {
         });
     },
 
+    /**
+     * @function connect
+     * @description Asks the client to connect to the database
+     * @param callback - The callback that will be called at the end
+     */
     connect: function(callback){
         // let nok = new Error("Server unavailable");
         client.connect((err) => {
@@ -278,6 +403,13 @@ module.exports = {
         });
     },
 
+    /**
+     * @function init_realtime
+     * @description Initializes the realtime data management
+     * @listens notification from PostgreSQL
+     * @param callback - The callback that will be called at the end
+     * @see dispatch_action called when notification received
+     */
     init_realtime: function(callback){
         client.query("LISTEN insert; LISTEN update; LISTEN delete", (err,res) => {
             if(err){
@@ -294,11 +426,15 @@ module.exports = {
         callback(null);
     },
 
+    /**
+     * @function disconnect
+     * @description Asks the client to disconnect to the database
+     */
     disconnect: function(){
         client.end((err) => {});
     }
 };
 
-var require = function(path) {
+let require = function(path) {
     return module.exports;
 };

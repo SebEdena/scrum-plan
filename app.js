@@ -1,30 +1,53 @@
+/**
+ * Main electron js file
+ * @description Defines the actions on app start
+ * @author Sébastien Viguier
+ */
 'use strict';
 
 const {app, globalShortcut, ipcMain, dialog} = require('electron');
 const BrowserWindow = require("electron").BrowserWindow;
 const async = require('async');
+
+/**
+ * Requiring the database handler module
+ * @see db/config.js
+ */
 let db = require('./db/config.js');
 
 let mainWindow = null;
 let ready = false, displayed = false;
+
+/**
+ * Initial state of the data
+ */
 global.data = {
     projects: {},
     current: null,
     user_stories: {},
     sprints: {}
 };
+
+/**
+ * State of the data fetch
+ */
 global.loaded = {
     projects: false,
     user_stories: false,
     sprints: false
 };
 
+/**
+ * Main function of the app
+ * Connects to the database and loads the GUI.
+ */
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
         width: 900,
         height: 700,
         title: "Scrum Assistant",
         show: false,
+        icon: __dirname + "/scrum.ico",
         backgroundColor: "#ede8e8"
     });
 
@@ -45,12 +68,16 @@ app.on("ready", function(){
     });
 });
 
+/**
+ * @function connect
+ * @description Defines the functions to call to initialize the databse link
+ */
 function connect(){
     async.waterfall([
         help_init,
-        db.init,
-        db.connect,
-        db.init_realtime
+        db.init, //initiazes the variables
+        db.connect, //connects to the database
+        db.init_realtime //registers the app as a listener of the database changes
     ], function (err, res) {
         if(err){
             mainWindow.webContents.send('error', {type: "connection", err: err});
@@ -62,10 +89,21 @@ function connect(){
     });
 }
 
+/**
+ * @function help_init
+ * @description Helper for the connection phase
+ * Initiates the first function
+ * @param callback - The callback used to communicate between functions
+ */
 function help_init(callback){
     callback(null, mainWindow, app);
 }
 
+/**
+ * @description EVENT HANDLER - Defines behaviour on action event
+ * @event ipcMain#action
+ * @param args - Parameters of the event
+ */
 ipcMain.on("action", (event, args) => {
     switch(args){
         case "ready": ready = true;
@@ -78,6 +116,10 @@ ipcMain.on("action", (event, args) => {
     }
 })
 
+/**
+ * @description EVENT HANDLER - Defines behaviour when exiting the application
+ * @event electron#will-quit
+ */
 app.once('will-quit', ()=>{
     db.disconnect();
 });

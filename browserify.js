@@ -1,6 +1,10 @@
-var $ = require('jquery');
+/**
+ * Brings the modules for front-end with browserify
+ * @author Sébastien Viguier
+ */
+const $ = require('jquery');
 $("img[attr$='png']").hide();
 require('jquery-validation');
-var Popper = require('popper.js');
-var dragula = require('dragula');
-var {Decimal} = require('decimal.js');
+const Popper = require('popper.js');
+const dragula = require('dragula');
+const {Decimal} = require('decimal.js');
