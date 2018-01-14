@@ -4,7 +4,7 @@
   "description": "An app that helps to apply Scrum to your project.",
   "author": "Sébastien Viguier",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "app.js",
   "dependencies": {
     "async": "^2.5.0",
@@ -26,8 +26,6 @@
     "start": "electron .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "debug": "electron --inspect=5858 app.js",
-    "package-win": "electron-packager . scrum-assistant --overwrite --asar=true
-                    --platform=win32 --arch=ia32 --icon=scrum.ico --prune=true
-                    --out=release-builds --version-string.ProductName=\"Scrum Assistant\""
+    "package-win": "electron-packager . scrum-assistant --overwrite --asar=true --platform=win32 --arch=ia32 --icon=scrum.ico --prune=true --out=release-builds --version-string.ProductName=\"Scrum Assistant\""
   }
 }

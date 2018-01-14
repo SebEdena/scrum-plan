@@ -62,7 +62,7 @@ app.on("ready", function(){
         }else{
             mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
             mainWindow.webContents.once('dom-ready', ()=>{
-                mainWindow.webContents.openDevTools({mode:"detach"});
+                // mainWindow.webContents.openDevTools({mode:"detach"});
                 mainWindow.show();
                 connect();
             });
@@ -125,6 +125,24 @@ ipcMain.on("action", (event, args) => {
  */
 app.once('will-quit', ()=>{
     db.disconnect();
+});
+
+/**
+ * @function
+ * @description EVENT HANDLER - Defines behaviour when all the windows are closed
+ * @listens app#window-all-closed
+ */
+app.on('window-all-closed', app.quit);
+
+/**
+ * @function
+ * @description EVENT HANDLER - Defines behaviour when exiting the application
+   Technical quit, not the app itself
+ * @listens app#before-quit
+ */
+app.on('before-quit', () => {
+    mainWindow.removeAllListeners('close');
+    mainWindow.close();
 });
 
 // process.on('uncaughtException', function(err){
