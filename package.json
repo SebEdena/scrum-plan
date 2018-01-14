@@ -4,7 +4,7 @@
   "description": "An app that helps to apply Scrum to your project.",
   "author": "Sébastien Viguier",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "main": "app.js",
   "dependencies": {
     "async": "^2.5.0",
