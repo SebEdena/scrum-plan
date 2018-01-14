@@ -8,7 +8,7 @@
 const pg = require('pg'); //Postgres for node.js
 const fs = require('fs'); //File system : read/write
 const {ipcMain, dialog} = require('electron');
-const connPath = './db/settings.json'; //File of db credentials
+const connPath = './db/settings_offline.json'; //File of db credentials
 const credentialsRules = {
     properties: ['user', 'password', 'host', 'port', 'database']
 };
