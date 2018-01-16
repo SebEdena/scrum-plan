@@ -365,7 +365,7 @@ $(document).ready(($)=>{
                 return index;
             }
         }
-        index = tmp_us.length;
+        let index = tmp_us.length;
         tmp_us[index] = true;
         return index;
     }
