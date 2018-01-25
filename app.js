@@ -132,7 +132,7 @@ app.once('will-quit', ()=>{
  * @description EVENT HANDLER - Defines behaviour when all the windows are closed
  * @listens app#window-all-closed
  */
-// app.on('window-all-closed', app.quit);
+app.on('window-all-closed', app.quit);
 
 /**
  * @function
@@ -140,10 +140,10 @@ app.once('will-quit', ()=>{
    Technical quit, not the app itself
  * @listens app#before-quit
  */
-// app.on('before-quit', () => {
-//     mainWindow.removeAllListeners('close');
-//     mainWindow.close();
-// });
+app.on('before-quit', () => {
+    mainWindow.removeAllListeners('close');
+    mainWindow.close();
+});
 
 // process.on('uncaughtException', function(err){
 //     console.error(err);
