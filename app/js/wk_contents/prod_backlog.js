@@ -359,13 +359,14 @@ $(document).ready(($)=>{
      * @returns {number} The index of where the user
      */
     function push_tmp(){
+        let index = -1;
         for(index in tmp_us){
             if(tmp_us[index] === false){
                 tmp_us[index] = true;
                 return index;
             }
         }
-        let index = tmp_us.length;
+        index = tmp_us.length;
         tmp_us[index] = true;
         return index;
     }
