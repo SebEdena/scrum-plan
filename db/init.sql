@@ -104,6 +104,13 @@ FOR EACH ROW EXECUTE PROCEDURE notify_update();
 CREATE TRIGGER deleted_user_stories_trigger AFTER DELETE ON user_stories
 FOR EACH ROW EXECUTE PROCEDURE notify_delete();
 
+CREATE TRIGGER created_sprints_trigger AFTER INSERT ON sprints
+FOR EACH ROW EXECUTE PROCEDURE notify_create();
+CREATE TRIGGER updated_sprints_trigger AFTER UPDATE ON sprints
+FOR EACH ROW EXECUTE PROCEDURE notify_update();
+CREATE TRIGGER deleted_sprints_trigger AFTER DELETE ON sprints
+FOR EACH ROW EXECUTE PROCEDURE notify_delete();
+
 CREATE TRIGGER pick_us_number BEFORE INSERT ON user_stories
 FOR EACH ROW EXECUTE PROCEDURE us_inc();
 CREATE TRIGGER pick_spr_number BEFORE INSERT ON sprints

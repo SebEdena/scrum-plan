@@ -62,7 +62,7 @@ app.on("ready", function(){
         }else{
             mainWindow.loadURL('file://' + __dirname + '/app/html/loading.html');
             mainWindow.webContents.once('dom-ready', ()=>{
-                // mainWindow.webContents.openDevTools({mode:"detach"});
+                mainWindow.webContents.openDevTools({mode:"detach"});
                 mainWindow.show();
                 connect();
             });
