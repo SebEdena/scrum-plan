@@ -116,7 +116,7 @@ FOR EACH ROW EXECUTE PROCEDURE us_inc();
 CREATE TRIGGER pick_spr_number BEFORE INSERT ON sprints
 FOR EACH ROW EXECUTE PROCEDURE spr_inc();
 
-INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda enigne that finally works');
+INSERT INTO projects (title, description) VALUES ('Honda Works', 'A Honda engine that finally works');
 
 INSERT INTO sprints (project, points) VALUES ((SELECT p.id FROM projects p WHERE p.title='Honda Works'), 10);
 INSERT INTO sprints (project, points) VALUES ((SELECT p.id FROM projects p WHERE p.title='Honda Works'), 4);

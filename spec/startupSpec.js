@@ -4,7 +4,7 @@ const path = require('path');
 
 let app = null;
 
-describe("A started app", function() {
+xdescribe("A started app", function() {
 
     beforeAll(function () {
         app = new Application({
@@ -26,12 +26,12 @@ describe("A started app", function() {
             cb();
         }, 10000);
         return app.client.waitUntilWindowLoaded(5000)
-            .then(()=>{
-                expect(cb).not.toHaveBeenCalled();
-            })
-            .catch(err=>{
-                fail();
-            });
+        .then(()=>{
+            expect(cb).not.toHaveBeenCalled();
+        })
+        .catch(err=>{
+            fail(err);
+        });
     });
 
     it('shows an initial window', ()=>{
