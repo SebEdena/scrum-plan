@@ -1,0 +1,32 @@
+.spr_user_story{
+    background-color: rgb(232, 232, 232);
+    border: 2px solid rgb(180, 180, 180);
+    -webkit-transition: background-color 0.5s;
+}
+
+.spr_user_story:hover{
+    background-color: rgb(221, 221, 221);
+}
+
+.spr_user_story p{
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.spr_us_container{
+    min-height: 20px;
+    padding: 2px;
+    background-color: rgb(180, 180, 180);
+}
+
+@media screen and (min-width: 1400px){
+    .spr_user_story p{
+        font-size: 1.4rem;
+    }
+}
+
+@media screen and (max-width: 1399px){
+    .pj_spr a, .pj_spr h3{
+        font-size:  1rem;
+    }
+}

@@ -1,13 +1,1 @@
-body{
-    background-color: #ede8e8;
-}
-
-#welcome{
-    color: white;
-    background: #000 url("../img/bgHome.jpg") center center;
-    background-size: cover;
-}
-
-.jumbotron hr{
-    background-color: white;
-}
+body{background-color:#ede8e8}#welcome{color:#fff;background:#000 url(../img/bgHome.jpg) center center;background-size:cover}.jumbotron hr{background-color:#fff}

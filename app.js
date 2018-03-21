@@ -141,8 +141,8 @@ app.once('will-quit', ()=>{
  * @listens app#before-quit
  */
 // app.on('before-quit', () => {
-//     mainWindow.removeAllListeners('close');
-//     mainWindow.close();
+//      mainWindow.removeAllListeners('close');
+//      mainWindow.close();
 // });
 
 // process.on('uncaughtException', function(err){
