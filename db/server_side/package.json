@@ -1,0 +1,12 @@
+{
+  "name": "scrum-assistant-server",
+  "version": "0.0.1",
+  "description": "\"Server-side for scrum-assistant\"",
+  "main": "server.js",
+  "author": "\"Sébastien Viguier\"",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "socket.io": "^2.0.4"
+  }
+}

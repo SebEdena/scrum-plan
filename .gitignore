@@ -2,3 +2,7 @@ node_modules
 db/settings
 settings.json
 release-builds
+prv
+*.crt
+*.srl
+*.csr

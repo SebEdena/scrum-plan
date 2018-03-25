@@ -15,6 +15,7 @@ let packagerOpts = {
         icon: "scrum.ico",
         executableName: "Scrum Assistant",
         ignore: [
+            "db/server_side",
             "db/settings",
             "spec",
             "src",
