@@ -17,6 +17,7 @@
     "pg": "^7.3.0",
     "photon": "git+https://github.com/connors/photon.git",
     "popper.js": "^1.12.6",
+    "socket.io": "^2.0.4",
     "yarn": "^1.5.1"
   },
   "devDependencies": {

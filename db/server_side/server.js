@@ -1,16 +1,21 @@
-const https = require('https');
+// const https = require('https');
+const http = require('http');
 const fs = require('fs');
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-let options = {
-  key: fs.readFileSync('./ssl/prv/ca.key'),
-  cert: fs.readFileSync('./ssl/ca.crt'),
-  passphrase: JSON.parse(fs.readFileSync('./ssl/prv/caSettings.json')).passphrase
-}, serverPort = 7000;
+// let options = {
+//     pfx: fs.readFileSync('./ssl/cert.pfx'),
+//     requestCert: false,
+//     passphrase: JSON.parse(fs.readFileSync('./ssl/certSettings.json')).passphrase,
+//     rejectUnauthorized: false
+// };
+let serverPort = 7000;
 
-let server = https.createServer(options, handler).listen(serverPort);
-let io = require('socket.io')(server);
-
+// let server = https.createServer(options, handler).listen(serverPort);
+let server = http.createServer(handler).listen(serverPort);
 function handler(req, res){
-    res.writeHead(200);
-    res.end("<h1>Hello</h1>");
+    res.writeHead(online?200:503);
+    res.end();
 }
+
+require('./core')(server);
