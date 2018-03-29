@@ -11,10 +11,12 @@ const fs = require('fs');
 // };
 let serverPort = 7000;
 
+global.online = false;
+
 // let server = https.createServer(options, handler).listen(serverPort);
 let server = http.createServer(handler).listen(serverPort);
 function handler(req, res){
-    res.writeHead(online?200:503);
+    res.writeHead(global.online?200:503);
     res.end();
 }
 

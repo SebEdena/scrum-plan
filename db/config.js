@@ -12,6 +12,8 @@ const connPath = './settings.json'; //File of db credentials
 const credentialsRules = {
     properties: ['user', 'password', 'host', 'port', 'database']
 };
+const io = require('socket.io-client');
+let socket = null, firstConnect = true;
 
 let connectionSettings = null;
 
@@ -23,22 +25,27 @@ let client = null, view = null, channel_send = null, app = null;
  * @param callback - The callback that will be called at the end
  */
 function init_client(callback){
-    client = new pg.Client(connectionSettings);
-    client.on('error', (err) => {
-        switch(err.code){
-            case "57P01":
-                dialog.showMessageBox({
-                    title: "Scrum Assistant",
-                    type: 'error',
-                    buttons: ['Ok'],
-                    message: 'Connection with server interrupted. The application will quit.',
-                }, resp => {
-                if (resp === 0) {
-                    app.quit();
-                }
-            });
-        }
+    socket = io("http://127.0.0.1:7000",
+        {path:"/scrum", autoConnect: false, reconnection: false});
+    // client = new pg.Client(connectionSettings);
+    socket.on('error', (err)=>{
+        console.log(err);
     });
+    // client.on('error', (err) => {
+    //     switch(err.code){
+    //         case "57P01":
+    //             dialog.showMessageBox({
+    //                 title: "Scrum Assistant",
+    //                 type: 'error',
+    //                 buttons: ['Ok'],
+    //                 message: 'Connection with server interrupted. The application will quit.',
+    //             }, resp => {
+    //             if (resp === 0) {
+    //                 app.quit();
+    //             }
+    //         });
+    //     }
+    // });
     callback(null);
 }
 
@@ -410,10 +417,25 @@ module.exports = {
      * @param callback - The callback that will be called at the end
      */
     connect: function(callback){
-        // let nok = new Error("Server unavailable");
-        client.connect((err) => {
-            callback(err);
-        });
+        socket.connect();
+        if(firstConnect){
+            firstConnect = false;
+            socket.on('connect', () => {
+                console.log("connected");
+                callback(null);
+            });
+            socket.on('welcome', (data)=>{
+                console.log('received welcome : ' + data);
+            });
+            socket.on('connect_error', (err) => {
+                console.log("Error!");
+                console.log(err);
+                callback(err);
+            });
+        }
+        // client.connect((err) => {
+        //     callback(err);
+        // });
     },
 
     /**
@@ -424,18 +446,18 @@ module.exports = {
      * @see dispatch_action called when notification received
      */
     init_realtime: function(callback){
-        client.query("LISTEN insert; LISTEN update; LISTEN delete", (err,res) => {
-            if(err){
-                callback(err);
-            }
-        });
-        client.on("notification", (data) => {
-            let item = JSON.parse(data.payload);
-            let type = String(Object.keys(item[0])[0]);
-            dispatch_action(item, type, data.channel, ()=>{
-                channel_send.send(data.channel, {type: type, data:item[0][type]});
-            });
-        });
+        // client.query("LISTEN insert; LISTEN update; LISTEN delete", (err,res) => {
+        //     if(err){
+        //         callback(err);
+        //     }
+        // });
+        // client.on("notification", (data) => {
+        //     let item = JSON.parse(data.payload);
+        //     let type = String(Object.keys(item[0])[0]);
+        //     dispatch_action(item, type, data.channel, ()=>{
+        //         channel_send.send(data.channel, {type: type, data:item[0][type]});
+        //     });
+        // });
         callback(null);
     },
 

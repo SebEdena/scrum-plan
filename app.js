@@ -76,30 +76,32 @@ app.on("ready", function(){
  */
 function connect(){
     async.waterfall([
-        help_init,
-        db.init, //initiazes the variables
+        // help_init,
+        async.apply(db.init, mainWindow, app), //initiazes the variables
         db.connect, //connects to the database
         db.init_realtime //registers the app as a listener of the database changes
     ], function (err, res) {
         if(err){
-            mainWindow.webContents.send('error', {type: "connection", err: err});
+            console.log('error in app.js');
+            // mainWindow.webContents.send('error', {type: "connection", err: err});
         }else{
-            setTimeout(()=>{
-                mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
-            }, 3000);
+            console.log('its working');
+            // setTimeout(()=>{
+            //     mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
+            // }, 3000);
         }
     });
 }
 
-/**
- * @function help_init
- * @description Helper for the connection phase
- * Initiates the first function
- * @param callback - The callback used to communicate between functions
- */
-function help_init(callback){
-    callback(null, mainWindow, app);
-}
+// /**
+//  * @function help_init
+//  * @description Helper for the connection phase
+//  * Initiates the first function
+//  * @param callback - The callback used to communicate between functions
+//  */
+// function help_init(callback){
+//     callback(null, mainWindow, app);
+// }
 
 /**
  * @function

@@ -1,3 +1,5 @@
+# README OUT OF DATE, DO NOT USE IT.
+
 # Setting up the server
 ## Installing `node_modules`
 You need to ensure `yarn` is installed or at least `npm`.<br>
