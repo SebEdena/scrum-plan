@@ -19,7 +19,7 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on("fetched", (event, args) => {
-        if(!(args.ret || ~asked_fetch['prod_backlog'].indexOf(args.type))){
+        if(!(args.err || ~asked_fetch['prod_backlog'].indexOf(args.type))){
             switch(args['type']){
                 case "user_stories": fill_all_us(); break;
                 default: break;
@@ -257,7 +257,6 @@ $(document).ready(($)=>{
                     feature: form.feature.value,
                     logs: form.description.value,
                     estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
-                    project: project_id,
                     tmp_ticket: index
                 };
                 ipcRenderer.send("create", {type: "us", data: data});

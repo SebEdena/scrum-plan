@@ -93,6 +93,7 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on('update', (event, args)=>{
+        console.log(args);
         if(args.type === "user_stories"){
             if($('#spr_us'+args.data.id).length === 0){
                 fill_sprint_us(args.data);
@@ -143,7 +144,7 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('error', (event, args) =>{
         console.error(args);
-    })
+    });
 
     /**
      * @function
@@ -161,7 +162,7 @@ $(document).ready(($)=>{
      * @listens #create_sp:resize
      */
     $('#create_sp').on('click', ()=>{
-        ipcRenderer.send('create', {type: "sprint", data:{project:project_id}});
+        ipcRenderer.send('create', {type: "sprint", data:{}});
     });
 
     /**

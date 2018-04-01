@@ -8,9 +8,9 @@ function DBSocketLinker(db_cli, skt){
 }
 
 DBSocketLinker.prototype.initEvents = function(){
-    this.socket.on('load', (type)=>{
-        this.load(type, (err, data) =>{
-            this.socket.emit('loaded', {type:type, err:err, data: data});
+    this.socket.on('load', (args)=>{
+        this.load(args.type, args.data, (err, data) =>{
+            this.socket.emit('loaded', {type:args.type, err:err, data: data});
         });
     });
     this.socket.on('create', (args)=>{
@@ -28,6 +28,17 @@ DBSocketLinker.prototype.initEvents = function(){
             this.socket.emit('created', obj);
         });
     });
+    this.socket.on('update', (args)=>{
+        this.send_update(args, res => {
+            if(res){
+                let obj = {data: args['data'],
+                action: "update",
+                type: args['type'],
+                err: res};
+                this.socket.emit('dbError', obj);
+            }
+        });
+    });
 }
 
 /**
@@ -36,7 +47,7 @@ DBSocketLinker.prototype.initEvents = function(){
  * @param type - The type of data that needs to be loaded
  * @param cb - The callback that will be called at the end
  */
-DBSocketLinker.prototype.load = function(type, cb){
+DBSocketLinker.prototype.load = function(type, data, cb){
     let query = null;
     switch (type) {
         case "projects": query = {
@@ -47,13 +58,13 @@ DBSocketLinker.prototype.load = function(type, cb){
         case "user_stories": query = {
                                     name: 'fetch-all-user-stories',
                                     text: 'SELECT us.* FROM user_stories us WHERE us.project=$1 ORDER BY us.id',
-                                    values: [global.data.current.id]
+                                    values: [data.project]
                              };
                              break;
         case "sprints": query = {
                             name: 'fetch-all-sprints',
                             text: 'SELECT sp.* FROM sprints sp WHERE sp.project=$1 ORDER BY sp.id',
-                            values: [global.data.current.id]
+                            values: [data.project]
                         };
         default: break;
     }
@@ -103,5 +114,39 @@ DBSocketLinker.prototype.create = function(type, data, cb){
             cb(err); return;
         }
         cb(res.rows[0]);
+    });
+}
+
+
+
+/**
+ * @function send_update
+ * @description Sends an update query to the database
+ * @param args - The type and data of the object to be updated
+ * @param callback - The callback that will be called at the end
+ */
+DBSocketLinker.prototype.send_update = function(args, cb){
+    let query = null, column = null;
+    switch(args.type){
+        case 'us': query = { name: 'update-us',
+                             text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
+                             values: [args.data.feature, args.data.logs, args.data.estimate, args.data.id, args.data.project]
+                         }; column="user_stories"; break;
+        case 'us_sprint': query = { name: 'update-us-sprint',
+                                    text: 'UPDATE user_stories SET sprint=$1 WHERE id=$2 AND project=$3',
+                                    values: [args.data.sprint, args.data.id, args.data.project]
+                                }; column="user_stories"; break;
+        case 'sprint': query = { name: 'update-sprint',
+                                 text: 'UPDATE sprints SET points=$1 WHERE id=$2 AND project=$3',
+                                 values: [args.data.points, args.data.id, args.data.project]
+                             }; column="sprints"; break;
+        default: break;
+    }
+    this.db.query(query, (err, res) => {
+        if(err){
+            console.log(err);
+            cb(err);
+        }
+        cb(null);
     });
 }

@@ -23,7 +23,7 @@ $(document).ready(($) => {
      * @param args - Parameters of the event
      */
     ipcRenderer.on("loaded", (event, args) => {
-        if(args.ret){
+        if(args.err){
             console.error("Cannot load " + args.type);
         }
     });

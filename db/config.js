@@ -80,7 +80,7 @@ function sendAppError(type){
  * @param type - The type of data that needs to be fetched
  * @param cb - The callback that will be called at the end
  */
-function fetch(type){
+function fetch(type, data){
     if(!global.loaded[type]){
         load(type);
         return false;
@@ -113,7 +113,9 @@ function fetch(type){
  * @param cb - The callback that will be called at the end
  */
 function load(type){
-    socket.emit('load', type);
+    let data = {};
+    if(global.data.current) data.project = global.data.current.id;
+    socket.emit('load', {type: type, data: data});
 }
 
 function loaded(args, cb){
@@ -177,6 +179,7 @@ function loaded(args, cb){
  * @param callback - The callback that will be called at the end
  */
 function create(type, data){
+    if(global.data.current) data.project = global.data.current.id;
     socket.emit('create', {type:type, data:data});
 }
 
@@ -292,37 +295,37 @@ function delete_item(item, type, callback){
 //     callback();
 // }
 
-/**
- * @function send_update
- * @description Sends an update query to the database
- * @param args - The type and data of the object to be updated
- * @param callback - The callback that will be called at the end
- */
-function send_update(args, callback){
-    let query = null, column = null;
-    switch(args.type){
-        case 'us': query = { name: 'update-us',
-                             text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
-                             values: [args.data.feature, args.data.logs, args.data.estimate, args.data.id, args.data.project]
-                         }; column="user_stories"; break;
-        case 'us_sprint': query = { name: 'update-us-sprint',
-                                    text: 'UPDATE user_stories SET sprint=$1 WHERE id=$2 AND project=$3',
-                                    values: [args.data.sprint, args.data.id, args.data.project]
-                                }; column="user_stories"; break;
-        case 'sprint': query = { name: 'update-sprint',
-                                 text: 'UPDATE sprints SET points=$1 WHERE id=$2 AND project=$3',
-                                 values: [args.data.points, args.data.id, args.data.project]
-                             }; column="sprints"; break;
-        default: break;
-    }
-    client.query(query, (err, res) => {
-        if(err){
-            console.log(err);
-            callback(err);
-        }
-        callback(null);
-    });
-}
+// /**
+//  * @function send_update
+//  * @description Sends an update query to the database
+//  * @param args - The type and data of the object to be updated
+//  * @param callback - The callback that will be called at the end
+//  */
+// function send_update(args, callback){
+//     let query = null, column = null;
+//     switch(args.type){
+//         case 'us': query = { name: 'update-us',
+//                              text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
+//                              values: [args.data.feature, args.data.logs, args.data.estimate, args.data.id, args.data.project]
+//                          }; column="user_stories"; break;
+//         case 'us_sprint': query = { name: 'update-us-sprint',
+//                                     text: 'UPDATE user_stories SET sprint=$1 WHERE id=$2 AND project=$3',
+//                                     values: [args.data.sprint, args.data.id, args.data.project]
+//                                 }; column="user_stories"; break;
+//         case 'sprint': query = { name: 'update-sprint',
+//                                  text: 'UPDATE sprints SET points=$1 WHERE id=$2 AND project=$3',
+//                                  values: [args.data.points, args.data.id, args.data.project]
+//                              }; column="sprints"; break;
+//         default: break;
+//     }
+//     client.query(query, (err, res) => {
+//         if(err){
+//             console.log(err);
+//             callback(err);
+//         }
+//         callback(null);
+//     });
+// }
 
 /**
  * @function send_delete
@@ -417,7 +420,7 @@ ipcMain.on("open_project", (event, args)=>{
  * @see fetch
  */
 ipcMain.on("fetch", (event, args) => {
-    if(fetch(args.type)) channel_send.send("fetched", {type: args.type});
+    if(fetch(args.type, args.data)) channel_send.send("fetched", {type: args.type});
     // fetch(args.type, (err) => {
     //     channel_send.send("fetched", {type: args.type, ret: err});
     // });
@@ -433,10 +436,23 @@ ipcMain.on("fetch", (event, args) => {
  * @see load
  */
 ipcMain.on("load", (event, args) => {
-    load(args.type, (err) => {
-        channel_send.send("loaded", {type: args.type, ret: err});
-    });
+    load(args.type);
 });
+
+// /**
+//  * @function
+//  * @description EVENT HANDLER - Defines behaviour on load data event
+//  * @listens ipcMain#load
+//  * @param event - The event
+//  * @param args - Parameters of the event
+//  * @fires ipcRenderer#loaded
+//  * @see load
+//  */
+// ipcMain.on("load", (event, args) => {
+//     load(args.type, (err) => {
+//         channel_send.send("loaded", {type: args.type, ret: err});
+//     });
+// });
 
 /**
  * @function
@@ -448,16 +464,30 @@ ipcMain.on("load", (event, args) => {
  * @see send_update
  */
 ipcMain.on('update', (event, args) => {
-    send_update(args, res => {
-        if(res){
-            let obj = {data: args['data'],
-                       action: "update",
-                       kind: args['type'],
-                       err: res};
-            event.sender.send('error', obj);
-        }
-    });
+    if(global.data.current) args.data.project = global.data.current.id;
+    socket.emit('update', args);
 });
+
+// /**
+//  * @function
+//  * @description EVENT HANDLER - Defines behaviour on update data event
+//  * @listens ipcMain#update
+//  * @param event - The event
+//  * @param args - Parameters of the event
+//  * @fires ipcRenderer#error
+//  * @see send_update
+//  */
+// ipcMain.on('update', (event, args) => {
+//     send_update(args, res => {
+//         if(res){
+//             let obj = {data: args['data'],
+//                        action: "update",
+//                        kind: args['type'],
+//                        err: res};
+//             event.sender.send('error', obj);
+//         }
+//     });
+// });
 
 /**
  * @function
@@ -510,6 +540,10 @@ function initSocketEvents(cb){
         delete_item(args.data, args.type, ()=>{
             channel_send.send('update', args);
         });
+    });
+
+    socket.on('dbError', (args)=>{
+        channel_send.send('error', args);
     });
 
     cb(null);
