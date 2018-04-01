@@ -21,7 +21,8 @@ $(document).ready(($)=>{
      * @see load_projects
      */
     ipcRenderer.on("fetched", (event, args) => {
-        if(!args.ret){
+        console.log(args);
+        if(!args.err){
             switch(args['type']){
                 case "projects": load_projects(); break;
                 default: break;
@@ -182,7 +183,7 @@ $(document).ready(($)=>{
      * @fires ipcMain#create
      */
     function pj_msg(args){
-        if(args.kind === "project"){
+        if(args.type === "project"){
             if(args.status === "ok"){
                 let msg = {title: "Scrum Assistant", type: 'info',buttons: ['Ok']};
                 msg.message = 'The project \"' + args.data.title + '\" ' + "has been created successfully !";

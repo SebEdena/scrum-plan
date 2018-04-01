@@ -1,6 +1,7 @@
 const async = require('async');
 const fs = require('fs');
 const pg = require('pg');
+const DBSocketLinker = require('./db');
 let io = null, server = null, db = null, connectionSettings = null;
 
 const credentialsRules = {
@@ -26,8 +27,8 @@ function init(server){
         }else{
             db_status(true);
             console.log("Database ready.");
+            init_events();
         }
-        init_events();
     });
 }
 
@@ -37,6 +38,7 @@ function init_events(){
         if(!global.online){
             socket.emit('srvError', 'DB_UNAVAILABLE');
         }else{
+            new DBSocketLinker(db, socket, io);
             socket.emit('srvInfo', 'DB_OK');
         }
         socket.on("disconnect", (reason)=>{
@@ -92,9 +94,7 @@ function db_realtime(callback){
     db.on("notification", (data) => {
         let item = JSON.parse(data.payload);
         let type = String(Object.keys(item[0])[0]);
-        dispatch_action(item, type, data.channel, ()=>{
-            io.sockets.emit(data.channel, {type: type, data:item[0][type]});
-        });
+        io.sockets.emit(data.channel, {type: type, data:item[0][type]});
     });
     callback(null);
 }

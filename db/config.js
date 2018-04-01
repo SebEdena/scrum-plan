@@ -80,15 +80,31 @@ function sendAppError(type){
  * @param type - The type of data that needs to be fetched
  * @param cb - The callback that will be called at the end
  */
-function fetch(type, cb){
+function fetch(type){
     if(!global.loaded[type]){
-        load(type, (err)=>{
-            cb(err);
-        });
+        load(type);
+        return false;
     }else{
-        cb(null);
+        return true;
     }
 }
+
+// /**
+//  * @function fetch
+//  * @description Asks to load a particular type of object from database.
+//  * If it is already loaded, it does not do anything but calling the callback
+//  * @param type - The type of data that needs to be fetched
+//  * @param cb - The callback that will be called at the end
+//  */
+// function fetch(type, cb){
+//     if(!global.loaded[type]){
+//         load(type, (err)=>{
+//             cb(err);
+//         });
+//     }else{
+//         cb(null);
+//     }
+// }
 
 /**
  * @function load
@@ -96,40 +112,62 @@ function fetch(type, cb){
  * @param type - The type of data that needs to be loaded
  * @param cb - The callback that will be called at the end
  */
-function load(type, cb){
-    let query = null;
-    switch (type) {
-        case "projects": query = {
-                            name: 'fetch-projects',
-                            text: 'SELECT * FROM projects p ORDER BY p.id'
-                         };
-                         break;
-        case "user_stories": query = {
-                                    name: 'fetch-all-user-stories',
-                                    text: 'SELECT us.* FROM user_stories us WHERE us.project=$1 ORDER BY us.id',
-                                    values: [global.data.current.id]
-                             };
-                             break;
-        case "sprints": query = {
-                            name: 'fetch-all-sprints',
-                            text: 'SELECT sp.* FROM sprints sp WHERE sp.project=$1 ORDER BY sp.id',
-                            values: [global.data.current.id]
-                        };
-        default: break;
+function load(type){
+    socket.emit('load', type);
+}
+
+function loaded(args, cb){
+    for(let obj of args.data){
+        global.data[args.type][obj.id] = obj;
     }
-    if(query){
-        client.query(query, (err, res) => {
-            if(err){
-                cb(err);
-            } else {
-                for(let obj of res.rows){
-                    global.data[type][obj.id] = obj;
-                }
-                cb(null);
-            }
-        });
+    if(!global.loaded[args.type]){
+        global.loaded[args.type] = true;
+        cb(true);
+    }else{
+        cb(false);
     }
 }
+
+// /**
+//  * @function load
+//  * @description Load a particular type of object from database
+//  * @param type - The type of data that needs to be loaded
+//  * @param cb - The callback that will be called at the end
+//  */
+// function load(type, cb){
+//     let query = null;
+//     switch (type) {
+//         case "projects": query = {
+//                             name: 'fetch-projects',
+//                             text: 'SELECT * FROM projects p ORDER BY p.id'
+//                          };
+//                          break;
+//         case "user_stories": query = {
+//                                     name: 'fetch-all-user-stories',
+//                                     text: 'SELECT us.* FROM user_stories us WHERE us.project=$1 ORDER BY us.id',
+//                                     values: [global.data.current.id]
+//                              };
+//                              break;
+//         case "sprints": query = {
+//                             name: 'fetch-all-sprints',
+//                             text: 'SELECT sp.* FROM sprints sp WHERE sp.project=$1 ORDER BY sp.id',
+//                             values: [global.data.current.id]
+//                         };
+//         default: break;
+//     }
+//     if(query){
+//         client.query(query, (err, res) => {
+//             if(err){
+//                 cb(err);
+//             } else {
+//                 for(let obj of res.rows){
+//                     global.data[type][obj.id] = obj;
+//                 }
+//                 cb(null);
+//             }
+//         });
+//     }
+// }
 
 /**
  * @function create
@@ -138,58 +176,69 @@ function load(type, cb){
  * @param data - The data to be inserted
  * @param callback - The callback that will be called at the end
  */
-function create(type, data, callback){
-    let query = null;
-    switch(type){
-        case "project": query = {
-                        name: "create-project",
-                        text: "INSERT INTO projects(title, description) VALUES ($1, $2) RETURNING projects.*",
-                        values: [data.title, data.description]
-                        };
-                        break;
-        case "us": query = {
-                      name: "create-user-story",
-                      text: "INSERT INTO user_stories (feature, logs, estimate, project) VALUES ($1, $2, $3, $4) RETURNING user_stories.*",
-                      values: [data.feature, data.logs, data.estimate, data.project]
-                      };
-                      break;
-        case "sprint": query = {
-                        name: "create-sprint",
-                        text: "INSERT INTO sprints (project) VALUES ($1) RETURNING sprints.*",
-                        values: [data.project]
-                        };
-                        break;
-        default: break;
-    }
-    client.query(query, (err, res) => {
-        if(err){
-            callback(err); return;
-        }
-        callback(res.rows[0]);
-    });
+function create(type, data){
+    socket.emit('create', {type:type, data:data});
 }
 
-/**
- * @function dispatch_action
- * @description Makes a decision when the real time system receives a notification
- * @param item - The item concerned by the notification
- * @param type - The type of the concerned item
- * @param action - The action to be performed
- * @param callback - The callback that will be called at the end
- * @see init_realtime
- */
-function dispatch_action(item, type, action, callback){
-    if(action === "insert" || action === "update"){
-        update_item(item, type, ()=>{
-            callback();
-        });
-    }
-    if(action === "delete"){
-        delete_item(item, type, () => {
-            callback();
-        });
-    }
-}
+// /**
+//  * @function create
+//  * @description Inserts a new row in the database corresponding to an object
+//  * @param type - The type of data that needs to be inserted
+//  * @param data - The data to be inserted
+//  * @param callback - The callback that will be called at the end
+//  */
+// function create(type, data, callback){
+//     let query = null;
+//     switch(type){
+//         case "project": query = {
+//                         name: "create-project",
+//                         text: "INSERT INTO projects(title, description) VALUES ($1, $2) RETURNING projects.*",
+//                         values: [data.title, data.description]
+//                         };
+//                         break;
+//         case "us": query = {
+//                       name: "create-user-story",
+//                       text: "INSERT INTO user_stories (feature, logs, estimate, project) VALUES ($1, $2, $3, $4) RETURNING user_stories.*",
+//                       values: [data.feature, data.logs, data.estimate, data.project]
+//                       };
+//                       break;
+//         case "sprint": query = {
+//                         name: "create-sprint",
+//                         text: "INSERT INTO sprints (project) VALUES ($1) RETURNING sprints.*",
+//                         values: [data.project]
+//                         };
+//                         break;
+//         default: break;
+//     }
+//     client.query(query, (err, res) => {
+//         if(err){
+//             callback(err); return;
+//         }
+//         callback(res.rows[0]);
+//     });
+// }
+
+// /**
+//  * @function dispatch_action
+//  * @description Makes a decision when the real time system receives a notification
+//  * @param item - The item concerned by the notification
+//  * @param type - The type of the concerned item
+//  * @param action - The action to be performed
+//  * @param callback - The callback that will be called at the end
+//  * @see init_realtime
+//  */
+// function dispatch_action(item, type, action, callback){
+//     if(action === "insert" || action === "update"){
+//         update_item(item, type, ()=>{
+//             callback();
+//         });
+//     }
+//     if(action === "delete"){
+//         delete_item(item, type, () => {
+//             callback();
+//         });
+//     }
+// }
 
 /**
  * @function update_item
@@ -199,9 +248,21 @@ function dispatch_action(item, type, action, callback){
  * @param callback - The callback that will be called at the end
  */
 function update_item(item, type, callback){
-    global.data[type][item[0][type].id] = item[0][type];
-    callback(null);
+    global.data[type][item.id] = item;
+    callback();
 };
+
+// /**
+//  * @function update_item
+//  * @description Updates or inserts a specific item in the global.data JSON array
+//  * @param item - The item to be updated or inserted
+//  * @param type - The type of the item
+//  * @param callback - The callback that will be called at the end
+//  */
+// function update_item(item, type, callback){
+//     global.data[type][item[0][type].id] = item[0][type];
+//     callback();
+// };
 
 /**
  * @function delete_item
@@ -211,11 +272,25 @@ function update_item(item, type, callback){
  * @param callback - The callback that will be called at the end
  */
 function delete_item(item, type, callback){
-    if(global.data[type].hasOwnProperty(item[0][type].id)){
-        delete global.data[type][item[0][type].id];
+    if(global.data[type].hasOwnProperty(item.id)){
+        delete global.data[type][item.id];
     }
     callback();
 }
+
+// /**
+//  * @function delete_item
+//  * @description Deletes a specific item in the global.data JSON array
+//  * @param item - The item to be deleted
+//  * @param type - The type of the item
+//  * @param callback - The callback that will be called at the end
+//  */
+// function delete_item(item, type, callback){
+//     if(global.data[type].hasOwnProperty(item[0][type].id)){
+//         delete global.data[type][item[0][type].id];
+//     }
+//     callback();
+// }
 
 /**
  * @function send_update
@@ -286,21 +361,34 @@ function send_delete(args, callback){
  * @see create
  */
 ipcMain.on("create", (event, args) => {
-    let obj = {data: args['data'],
-               kind: args['type'],
-               err: null};
-
-    create(args['type'], args['data'], (ret) => {
-        if(typeof ret === 'Error'){
-          obj['status'] = "nok";
-          obj['err'] = ret;
-        }else{
-          Object.keys(ret).forEach((key) => obj['data'][key] = ret[key]);
-          obj['status'] = "ok";
-        }
-        event.sender.send('created', obj);
-    });
+    create(args.type, args.data);
 });
+
+// /**
+//  * @function
+//  * @description EVENT HANDLER - Defines behaviour on create item event
+//  * @listens ipcMain#create
+//  * @param event - The event
+//  * @param args - Parameters of the event
+//  * @fires ipcRenderer#created
+//  * @see create
+//  */
+// ipcMain.on("create", (event, args) => {
+//     let obj = {data: args['data'],
+//                type: args['type'],
+//                err: null};
+//
+//     create(args['type'], args['data'], (ret) => {
+//         if(typeof ret === 'Error'){
+//           obj['status'] = "nok";
+//           obj['err'] = ret;
+//         }else{
+//           Object.keys(ret).forEach((key) => obj['data'][key] = ret[key]);
+//           obj['status'] = "ok";
+//         }
+//         event.sender.send('created', obj);
+//     });
+// });
 
 /**
  * @function
@@ -329,9 +417,10 @@ ipcMain.on("open_project", (event, args)=>{
  * @see fetch
  */
 ipcMain.on("fetch", (event, args) => {
-    fetch(args.type, (err) => {
-        channel_send.send("fetched", {type: args.type, ret: err});
-    });
+    if(fetch(args.type)) channel_send.send("fetched", {type: args.type});
+    // fetch(args.type, (err) => {
+    //     channel_send.send("fetched", {type: args.type, ret: err});
+    // });
 });
 
 /**
@@ -390,6 +479,41 @@ ipcMain.on('delete', (event, args) => {
         }
     });
 });
+
+function initSocketEvents(cb){
+
+    socket.on('loaded', (args)=>{
+        loaded(args, (sendFetch)=>{
+            args.data = null;
+            channel_send.send('loaded', args);
+            if(sendFetch) channel_send.send('fetched', args);
+        });
+    });
+
+    socket.on('created', (args)=>{
+        channel_send.send('created', args);
+    });
+
+    socket.on('insert', (args)=>{
+        update_item(args.data, args.type, ()=>{
+            channel_send.send('insert', args);
+        });
+    });
+
+    socket.on('update', (args)=>{
+        update_item(args.data, args.type, ()=>{
+            channel_send.send('update', args);
+        });
+    });
+
+    socket.on('delete', (args)=>{
+        delete_item(args.data, args.type, ()=>{
+            channel_send.send('update', args);
+        });
+    });
+
+    cb(null);
+}
 
 /**
  * All the functions that will be exported from the module
@@ -462,6 +586,10 @@ module.exports = {
         });
     },
 
+    init_events: function(cb){
+        initSocketEvents(cb);
+    },
+
     /**
      * @function init_realtime
      * @description Initializes the realtime data management
@@ -490,7 +618,7 @@ module.exports = {
      * @description Asks the client to disconnect to the database
      */
     disconnect: function(){
-        client.end((err) => {});
+        socket.close();
     }
 };
 

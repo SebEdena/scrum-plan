@@ -79,16 +79,15 @@ function connect(){
         // help_init,
         async.apply(db.init, mainWindow, app), //initiazes the variables
         db.connect, //connects to the database
-        db.init_realtime //registers the app as a listener of the database changes
+        db.init_events,
+        // db.init_realtime //registers the app as a listener of the database changes
     ], function (err, res) {
         if(err){
-            console.log('error in app.js');
             mainWindow.webContents.send('error', {type: "connection", err: err});
         }else{
-            console.log('its working');
-            // setTimeout(()=>{
-            //     mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
-            // }, 3000);
+            setTimeout(()=>{
+                mainWindow.loadURL('file://' + __dirname + '/app/html/home.html');
+            }, 3000);
         }
     });
 }
