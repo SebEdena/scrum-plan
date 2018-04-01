@@ -22,6 +22,7 @@ $(document).ready(($)=>{
      * @fires ipcMain#action to quit or reconnect the app with the database
      */
     ipcRenderer.on('error', (event, args) => {
+        let errCause = (typeof args.err === "string")?args.err:args.err.type;
         $('#spinner > div').hide();
         $('#spinner > img').toggle();
         $('#connection_status').text('Connection failed.');
@@ -32,7 +33,7 @@ $(document).ready(($)=>{
             noLink: true,
             defaultId: 1,
             message: 'The server is unavailable.\nPlease ensure you have a working Internet connection and retry, or quit.',
-            detail: 'Error: ' + args.err.code,
+            detail: 'Error: ' + errCause,
             buttons: ['Exit', 'Retry']}, resp=>{
                 switch(resp){
                     case 0: ipcRenderer.send("action", "quit"); break;

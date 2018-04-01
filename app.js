@@ -83,7 +83,7 @@ function connect(){
     ], function (err, res) {
         if(err){
             console.log('error in app.js');
-            // mainWindow.webContents.send('error', {type: "connection", err: err});
+            mainWindow.webContents.send('error', {type: "connection", err: err});
         }else{
             console.log('its working');
             // setTimeout(()=>{

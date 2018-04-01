@@ -13,9 +13,7 @@ const credentialsRules = {
     properties: ['user', 'password', 'host', 'port', 'database']
 };
 const io = require('socket.io-client');
-let socket = null, firstConnect = true;
-
-let connectionSettings = null;
+let socket = null, connectionSettings = null;
 
 let client = null, view = null, channel_send = null, app = null;
 
@@ -29,7 +27,14 @@ function init_client(callback){
         {path:"/scrum", autoConnect: false, reconnection: false});
     // client = new pg.Client(connectionSettings);
     socket.on('error', (err)=>{
+        console.log('error event');
         console.log(err);
+        sendAppError(err.description.code);
+    });
+    socket.on('srvError', (err)=>{
+        if(err !== "DB_UNAVAILABLE"){
+            sendAppError(err);
+        }
     });
     // client.on('error', (err) => {
     //     switch(err.code){
@@ -47,6 +52,25 @@ function init_client(callback){
     //     }
     // });
     callback(null);
+}
+
+function sendAppError(type){
+    let msg = "Error : an unknown error occured.";
+    switch(type){
+        case "ECONNRESET": msg = 'Connection with server interrupted. The application will quit.'; break;
+        case "DB_CONN_LOST": msg = 'Server lost connection with the database. The application will quit.'; break;
+        default: break;
+    }
+    dialog.showMessageBox({
+        title: "Scrum Assistant",
+        type: 'error',
+        buttons: ['Ok'],
+        message: msg,
+    }, resp => {
+        if (resp === 0) {
+            app.quit();
+        }
+    });
 }
 
 /**
@@ -418,24 +442,24 @@ module.exports = {
      */
     connect: function(callback){
         socket.connect();
-        if(firstConnect){
-            firstConnect = false;
-            socket.on('connect', () => {
-                console.log("connected");
-                callback(null);
-            });
-            socket.on('welcome', (data)=>{
-                console.log('received welcome : ' + data);
-            });
-            socket.on('connect_error', (err) => {
-                console.log("Error!");
+        socket.on('connect', () => {
+            console.log("connected");
+        });
+        socket.on('connect_error', (err) => {
+            console.log(err);
+            callback(err);
+        });
+        socket.on('srvError', (err)=>{
+            if(err === "DB_UNAVAILABLE"){
+                console.log('srvError event');
                 console.log(err);
                 callback(err);
-            });
-        }
-        // client.connect((err) => {
-        //     callback(err);
-        // });
+            }
+        });
+        socket.on('srvInfo', (status) => {
+            console.log(status);
+            callback(null);
+        });
     },
 
     /**

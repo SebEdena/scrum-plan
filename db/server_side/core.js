@@ -26,16 +26,19 @@ function init(server){
         }else{
             db_status(true);
             console.log("Database ready.");
-            init_events();
         }
+        init_events();
     });
 }
 
 function init_events(){
     io.on('connection', (socket)=>{
-        console.log("new connection : " + socket.id);
-        socket.emit('welcome', 'yeeee');
-
+        console.log("connect : " + socket.id);
+        if(!global.online){
+            socket.emit('srvError', 'DB_UNAVAILABLE');
+        }else{
+            socket.emit('srvInfo', 'DB_OK');
+        }
         socket.on("disconnect", (reason)=>{
             console.log("disconnect : " + socket.id);
         });
@@ -101,6 +104,6 @@ function db_status(online){
     global.online = online;
     if(!online){
         console.log('Database connection unavailable');
-        io.sockets.emit('srvError', 'DB_UNAVAILABLE');
+        io.sockets.emit('srvError', 'DB_CONN_LOST');
     }
 }
