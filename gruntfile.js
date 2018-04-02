@@ -1,5 +1,5 @@
 const packager = require('electron-packager');
-let src="src", dest="app", db="db/settings/settings_offline.json";
+let src="src", dest="app", db="db/settings/settings_local.json";
 
 let packagerOpts = {
     "win32-ia32": {

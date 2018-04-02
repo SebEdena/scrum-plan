@@ -43,7 +43,7 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on('created', (event, args)=>{
-        if(args.err && args.kind === "sprint"){
+        if(args.err && args.type === "sprint"){
             dialog.showMessageBox({title: "Scrum Assistant",
                                     type: 'error',
                                     buttons: ['ok'],
@@ -93,7 +93,6 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on('update', (event, args)=>{
-        console.log(args);
         if(args.type === "user_stories"){
             if($('#spr_us'+args.data.id).length === 0){
                 fill_sprint_us(args.data);
@@ -173,7 +172,9 @@ $(document).ready(($)=>{
     $('#delete_sp').on('click', ()=>{
         let items = $(".pj_spr:not(#spr_us)");
         if(items.length !== 0){
-            ipcRenderer.send('delete', {type: "sprint", data:{project:project_id, id:items.last().data("spr_id")}});
+            ipcRenderer.send('delete', {type: "sprint", data:{
+                // project:project_id,
+                id:items.last().data("spr_id")}});
         }
     });
 
@@ -292,7 +293,7 @@ $(document).ready(($)=>{
                 item.find('input, button').prop("disabled", true);
                 let data = {
                     id: item.data('spr_id'),
-                    project: project_id,
+                    // project: project_id,
                     points: parseFloat(form.points.value).toFixed(2)
                 };
                 ipcRenderer.send('update', {type: "sprint", data: data});
@@ -411,7 +412,7 @@ $(document).ready(($)=>{
                 ipcRenderer.send("update", {type:"us_sprint",
                 data: {
                     id:$(el).data('id'),
-                    project:project_id,
+                    // project:project_id,
                     sprint:new_sp
                 }});
             }

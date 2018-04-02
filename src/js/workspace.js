@@ -29,6 +29,30 @@ $(document).ready(($) => {
     });
 
     /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour on error event
+     * @listens ipcRenderer#error
+     * @param event - The event
+     * @param args - Parameters of the event
+     */
+    ipcRenderer.on('error', (event, args) => {
+        let msg = "";
+        switch(args.type){
+            case 'us': msg += 'The US #' + args.data.id+ ' : \"' + args.data.feature + '\" ' ; break;
+            case 'sprint': msg += 'The Sprint #' + args.data.id+ ' '; break;
+            case 'us_sprint': msg += 'The Sprint of the US #' + args.data.id+ ' '; break;
+            default: return;
+        }
+        switch(args.action){
+            case 'update' : msg += "could not be updated."; break;
+            case 'delete' : msg += "could not be deleted."; break;
+            default : return;
+        }
+        dialog.showMessageBox({title: "Scrum Assistant", type: 'error', buttons: ['Ok'],
+        message: msg}, ()=>{});
+    });
+
+    /**
      * @function switch_tab
      * @description Switches between module tabs
      * @param source - The html node which is the clicked tab

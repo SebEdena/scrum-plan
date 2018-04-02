@@ -8,12 +8,12 @@
 const pg = require('pg'); //Postgres for node.js
 const fs = require('fs'); //File system : read/write
 const {ipcMain, dialog} = require('electron');
+const io = require('socket.io-client');
 const connPath = './settings.json'; //File of db credentials
 const credentialsRules = {
-    properties: ['user', 'password', 'host', 'port', 'database']
+    properties: ['uri']
 };
-const io = require('socket.io-client');
-let socket = null, connectionSettings = null;
+let socket = null, serverSettings = null;
 
 let client = null, view = null, channel_send = null, app = null;
 
@@ -23,7 +23,7 @@ let client = null, view = null, channel_send = null, app = null;
  * @param callback - The callback that will be called at the end
  */
 function init_client(callback){
-    socket = io("http://127.0.0.1:7000",
+    socket = io(serverSettings.uri,
         {path:"/scrum", autoConnect: false, reconnection: false});
     // client = new pg.Client(connectionSettings);
     socket.on('error', (err)=>{
@@ -71,6 +71,18 @@ function sendAppError(type){
             app.quit();
         }
     });
+}
+
+function needsNotification(type, data){
+    if(type === "projects"){
+        return true;
+    }else{
+        if(global.data.current){
+            return data.project === global.data.current.id;
+        }else{
+            return false;
+        }
+    }
 }
 
 /**
@@ -327,32 +339,32 @@ function delete_item(item, type, callback){
 //     });
 // }
 
-/**
- * @function send_delete
- * @description Sends an delete query to the database
- * @param args - The type and data of the object to be deleted
- * @param callback - The callback that will be called at the end
- */
-function send_delete(args, callback){
-    let query = null, column = null;
-    switch(args.type){
-        case 'us': query = { name: 'delete-us',
-                             text: 'DELETE FROM user_stories WHERE id=$1 AND project=$2',
-                             values: [args.data.id, args.data.project]
-                         }; column="user_stories"; break;
-        case 'sprint': query = { name: 'delete-sprint',
-                                text: 'DELETE FROM sprints WHERE id=$1 AND project=$2',
-                                values: [args.data.id, args.data.project]
-                            }; column="sprints"; break;
-        default: break;
-    }
-    client.query(query, (err, res) => {
-        if(err){
-            callback(err);
-        }
-        callback(null);
-    });
-}
+// /**
+//  * @function send_delete
+//  * @description Sends an delete query to the database
+//  * @param args - The type and data of the object to be deleted
+//  * @param callback - The callback that will be called at the end
+//  */
+// function send_delete(args, callback){
+//     let query = null, column = null;
+//     switch(args.type){
+//         case 'us': query = { name: 'delete-us',
+//                              text: 'DELETE FROM user_stories WHERE id=$1 AND project=$2',
+//                              values: [args.data.id, args.data.project]
+//                          }; column="user_stories"; break;
+//         case 'sprint': query = { name: 'delete-sprint',
+//                                 text: 'DELETE FROM sprints WHERE id=$1 AND project=$2',
+//                                 values: [args.data.id, args.data.project]
+//                             }; column="sprints"; break;
+//         default: break;
+//     }
+//     client.query(query, (err, res) => {
+//         if(err){
+//             callback(err);
+//         }
+//         callback(null);
+//     });
+// }
 
 /**
  * @function
@@ -402,6 +414,7 @@ ipcMain.on("create", (event, args) => {
  */
 ipcMain.on("open_project", (event, args)=>{
     for(let i in global.data['projects']){
+        // console.log(global.data.projects[i]);
         if(args.id === global.data['projects'][i].id){
             global.data['current'] = global.data['projects'][i];
             break;
@@ -499,16 +512,30 @@ ipcMain.on('update', (event, args) => {
  * @see send_delete
  */
 ipcMain.on('delete', (event, args) => {
-    send_delete(args, res => {
-        if(res){
-            let obj = {data: args['data'],
-            kind: args['type'],
-            action: "delete",
-            err: res};
-            event.sender.send('error', obj);
-        }
-    });
+    if(global.data.current) args.data.project = global.data.current.id;
+    socket.emit('delete', args);
 });
+
+// /**
+//  * @function
+//  * @description EVENT HANDLER - Defines behaviour on delete data event
+//  * @listens ipcMain#delete
+//  * @param event - The event
+//  * @param args - Parameters of the event
+//  * @fires ipcRenderer#error
+//  * @see send_delete
+//  */
+// ipcMain.on('delete', (event, args) => {
+//     send_delete(args, res => {
+//         if(res){
+//             let obj = {data: args['data'],
+//             kind: args['type'],
+//             action: "delete",
+//             err: res};
+//             event.sender.send('error', obj);
+//         }
+//     });
+// });
 
 function initSocketEvents(cb){
 
@@ -525,25 +552,31 @@ function initSocketEvents(cb){
     });
 
     socket.on('insert', (args)=>{
-        update_item(args.data, args.type, ()=>{
-            channel_send.send('insert', args);
-        });
+        if(needsNotification(args.type, args.data)){
+            update_item(args.data, args.type, ()=>{
+                channel_send.send('insert', args);
+            });
+        }
     });
 
     socket.on('update', (args)=>{
-        update_item(args.data, args.type, ()=>{
-            channel_send.send('update', args);
-        });
+        if(needsNotification(args.type, args.data)){
+            update_item(args.data, args.type, ()=>{
+                channel_send.send('update', args);
+            });
+        }
     });
 
     socket.on('delete', (args)=>{
-        delete_item(args.data, args.type, ()=>{
-            channel_send.send('update', args);
-        });
+        if(needsNotification(args.type, args.data)){
+            delete_item(args.data, args.type, ()=>{
+                channel_send.send('delete', args);
+            });
+        }
     });
 
     socket.on('dbError', (args)=>{
-        channel_send.send('error', args);
+        if(needsNotification(args.type, args.data)) channel_send.send('error', args);
     });
 
     cb(null);
@@ -563,9 +596,9 @@ module.exports = {
         fs.readFile(connPath, (err, data) => {
             if (err) callback(err);
             try{
-                connectionSettings = JSON.parse(data);
+                serverSettings = JSON.parse(data);
                 for(let property of credentialsRules.properties){
-                    if(!connectionSettings.hasOwnProperty(property)){
+                    if(!serverSettings.hasOwnProperty(property)){
                         callback(new Error('Missing credential property \"'+property+'\"'));
                         return;
                     }

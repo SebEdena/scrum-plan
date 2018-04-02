@@ -5,7 +5,7 @@
  */
 'use strict';
 let tmp_us = []; //Array of us not validated by the database yet
-let us_update = {}; //Array of sprints containing user stories to be update after sprint update
+let us_update = {}; //Array of sprints containing user stories to be updated after sprint update
 let us_sprint_update = []; //Array of user stories to be updated once removed from sprint
 
 $(document).ready(($)=>{
@@ -36,7 +36,7 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on("created", (event, args) => {
-        if(args.kind === "us"){
+        if(args.type === "us"){
             if(args.status === "ok"){
                 if($('#us'+args.data.id).length === 0){
                     validate_us($('#us_tmp'+args.data.tmp_ticket), args.data);
@@ -125,14 +125,14 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('error', (event, args) => {
         if(args.type === "us"){
-            let msg = 'The US #' + args.data.id+ ' : \"' + args.data.feature;
-            switch(args.action){
-                case 'update' : message += "\" could not be updated."; break;
-                case 'delete' : message += "\" could not be deleted."; break;
-                default : break;
-            }
-            dialog.showMessageBox({title: "Scrum Assistant", type: 'error', buttons: ['Ok'],
-            message: msg}, ()=>{});
+            // let msg = 'The US #' + args.data.id+ ' : \"' + args.data.feature;
+            // switch(args.action){
+            //     case 'update' : message += "\" could not be updated."; break;
+            //     case 'delete' : message += "\" could not be deleted."; break;
+            //     default : break;
+            // }
+            // dialog.showMessageBox({title: "Scrum Assistant", type: 'error', buttons: ['Ok'],
+            // message: msg}, ()=>{});
             $('#us'+args.data.id).find("button").prop("disabled", false);
         }
     });
@@ -187,6 +187,7 @@ $(document).ready(($)=>{
      */
     function fill_all_us(){
         let us = remote.getGlobal('data').user_stories;
+        console.log(us);
         for(let i in us){
             fill_us(us[i]);
         }
@@ -398,7 +399,9 @@ $(document).ready(($)=>{
                     item.remove();
                 }else{
                     ipcRenderer.send('delete', {type: "us", data: {id:item.data('id'),
-                    feature: item.find('#feat').val(), project: project_id}});
+                    feature: item.find('#feat').val()
+                    // , project: project_id
+                    }});
                 }
             }else{
                 if(new_us){
@@ -445,7 +448,7 @@ $(document).ready(($)=>{
             feature: form.feature.value,
             logs: form.description.value,
             estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
-            project: project_id,
+            // project: project_id,
             id: item.data('id')
         };
         ipcRenderer.send("update", {type: "us", data: data});
@@ -493,7 +496,7 @@ $(document).ready(($)=>{
                               .toNumber();
         let data = {
             id: sprint.id,
-            project: project_id,
+            // project: project_id,
             points: new_points
         };
         ipcRenderer.send('update', {type: "sprint", data: data});
@@ -527,7 +530,7 @@ $(document).ready(($)=>{
         ipcRenderer.send("update", {type:"us_sprint",
             data: {
                 id:us.id,
-                project:project_id,
+                // project:project_id,
                 sprint:-1
             }
         });
