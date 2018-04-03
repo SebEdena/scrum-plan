@@ -21,7 +21,7 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on("fetched", (event, args) => {
-        if(!(args.ret || ~asked_fetch['spr_backlog'].indexOf(args.type))){
+        if(!(args.err || ~asked_fetch['spr_backlog'].indexOf(args.type))){
             switch(args['type']){
                 case "user_stories": ipcRenderer.send("fetch", {type:"sprints"});
                                      break;
@@ -94,6 +94,7 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('update', (event, args)=>{
         if(args.type === "user_stories"){
+            console.log(args);
             if($('#spr_us'+args.data.id).length === 0){
                 fill_sprint_us(args.data);
             }else{
@@ -104,13 +105,16 @@ $(document).ready(($)=>{
                     assign_us_to_sprint($('#spr_us'+args.data.id), args.data.sprint, true, "#"+previous_sp.attr('id'));
                 } else {
                     if(args.data.sprint !== -1){
-                        $('#spr_'+args.data.sprint).data('pt_left',
-                        new Decimal($('#spr_'+args.data.sprint).data('pt_left'))
-                        .minus(diff_est)
-                        .toNumber());
-                        $('#spr_'+args.data.sprint)
-                        .find('#left')
-                        .text('Left: ' + $('#spr_'+args.data.sprint).data('pt_left'));
+                        let item = $('#spr_'+args.data.sprint);
+                        item.data('pt_left',
+                            new Decimal($('#spr_'+args.data.sprint).data('pt_left'))
+                            .minus(diff_est)
+                            .toNumber());
+                        item.find('#left')
+                            .text('Left: ' + $('#spr_'+args.data.sprint).data('pt_left'));
+                        item.find('#total_pts').attr('min', Decimal.sub(item.data('total'),
+                                                                        item.data('pt_left'))
+                                                                        .toNumber());
                     }
                 }
                 $('#spr_us'+args.data.id).html(`<p>US#${args.data.id} <small class="text-muted">Estimated: ${parseFloat(args.data.estimate)}</small></p>`);
@@ -119,7 +123,7 @@ $(document).ready(($)=>{
                     title: args.data.feature
                 });
             }
-        }
+        } // 17 63 26 22
         if(args.type === "sprints"){
             let item = $('#spr_'+args.data.id);
             let diff_pts = Decimal.sub(args.data.points,item.data('total'));
