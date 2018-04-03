@@ -2,7 +2,7 @@ const async = require('async');
 const fs = require('fs');
 const pg = require('pg');
 const DBSocketLinker = require('./db');
-let io = null, server = null, db = null, connectionSettings = null;
+let io = null, server = null, db = null, pool = null, connectionSettings = null;
 
 const credentialsRules = {
     properties: ['user', 'password', 'host', 'port', 'database']
@@ -25,6 +25,9 @@ function init(server){
             console.error('Database not in ready state. ' + err);
             db_status(false);
         }else{
+            pool = new pg.Pool(Object.assign({max:10,
+                                              idleTimeoutMillis: 2000}, 
+                                              connectionSettings));
             db_status(true);
             console.log("Database ready.");
             init_events();
@@ -38,13 +41,30 @@ function init_events(){
         if(!global.online){
             socket.emit('srvError', 'DB_UNAVAILABLE');
         }else{
-            new DBSocketLinker(db, socket, io);
+            new DBSocketLinker(pool, socket, io);
             socket.emit('srvInfo', 'DB_OK');
         }
         socket.on("disconnect", (reason)=>{
             console.log("disconnect : " + socket.id);
         });
     });
+    pool.on('error', (err, cli)=>{
+        console.log(err);
+    });
+    pool.on('acquire', (cli)=>{
+        console.log('client acquired');
+    });
+
+    pool.on('remove', (cli)=>{
+        console.log('client removed');
+    });
+    // process.on('beforeExit', (code)=>{
+    //     db_status(false);
+    //     io.close();
+    //     pool.end(()=>{});
+    //     db.end((err)=>{});
+    //     server.close();
+    // });
 }
 
 function db_credentials(callback){
