@@ -1,6 +1,13 @@
+/**
+ * @file server.js
+ * Main Node.js file for server side
+ * @description Defines the actions on server startup
+ * @author Sébastien Viguier
+ * @see core.js
+ */
 // const https = require('https');
 const http = require('http');
-const fs = require('fs');
+// const fs = require('fs');
 // process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
 // let options = {
@@ -9,9 +16,9 @@ const fs = require('fs');
 //     passphrase: JSON.parse(fs.readFileSync('./ssl/certSettings.json')).passphrase,
 //     rejectUnauthorized: false
 // };
-let serverPort = 7000;
+let serverPort = 7000; //listening port
 
-global.online = false;
+global.online = false; //variable for db status
 
 // let server = https.createServer(options, handler).listen(serverPort);
 let server = http.createServer(handler).listen(serverPort);
@@ -20,4 +27,4 @@ function handler(req, res){
     res.end();
 }
 
-require('./core')(server);
+require('./core')(server); //calling the core.js file with server as a parameter

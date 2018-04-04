@@ -1,12 +1,40 @@
+/**
+ * @file db.js
+ * Module for the DBSocketLinker class
+ * @author Sébastien Viguier
+ * @module db.js
+ */
 const pg = require('pg');
-module.exports = DBSocketLinker;
+module.exports = DBSocketLinker; //Exports the module as the DBSocketLinker class
 
+/**
+ * Initializes the class
+ * @class
+ * @classdesc This class helps each client app to interact with the server individually
+ * @see DBSocketLinker#initEvents
+ */
 function DBSocketLinker(db_cli, skt){
-    this.db = db_cli;
-    this.socket = skt;
+    this.db = db_cli; //Reference to the pool of available database clients
+    this.socket = skt; //The socket of the client app
     this.initEvents();
 }
 
+/**
+ * @function DBSocketLinker#initEvents
+ * @description Initializes the events ot the module
+ * @listens socket:load - When the client app is asking to load data
+ * @listens socket:create - When the client app asks to create data
+ * @listens socket:upload - When the client app asks to upload data
+ * @listens socket:delete - When the client app asks to delete data
+ * @fires socket:loaded - When data is loaded
+ * @fires socket:created - When the data has been created
+ * @fires socket:dbError - In case of any error while uploading
+ * @fires socket:dbError - In case of any error while deleting
+ * @see DBSocketLinker#load
+ * @see DBSocketLinker#create
+ * @see DBSocketLinker#send_update
+ * @see DBSocketLinker#send_delete
+ */
 DBSocketLinker.prototype.initEvents = function(){
     this.socket.on('load', (args)=>{
         this.load(args.type, args.data, (err, data) =>{
@@ -39,16 +67,6 @@ DBSocketLinker.prototype.initEvents = function(){
             }
         });
     });
-
-    /**
-     * @function
-     * @description EVENT HANDLER - Defines behaviour on delete data event
-     * @listens ipcMain#delete
-     * @param event - The event
-     * @param args - Parameters of the event
-     * @fires ipcRenderer#error
-     * @see send_delete
-     */
     this.socket.on('delete', (args) => {
         this.send_delete(args, res => {
             if(res){
@@ -63,9 +81,10 @@ DBSocketLinker.prototype.initEvents = function(){
 }
 
 /**
- * @function load
- * @description Load a particular type of object from database
+ * @function DBSocketLinker#load
+ * @description Loads a particular type of object from the database
  * @param type - The type of data that needs to be loaded
+ * @param data - The input of what needs to be loaded
  * @param cb - The callback that will be called at the end
  */
 DBSocketLinker.prototype.load = function(type, data, cb){
@@ -102,11 +121,11 @@ DBSocketLinker.prototype.load = function(type, data, cb){
 }
 
 /**
- * @function create
+ * @function DBSocketLinker#create
  * @description Inserts a new row in the database corresponding to an object
  * @param type - The type of data that needs to be inserted
  * @param data - The data to be inserted
- * @param callback - The callback that will be called at the end
+ * @param cb - The callback that will be called at the end
  */
 DBSocketLinker.prototype.create = function(type, data, cb){
     let query = null;
@@ -142,10 +161,10 @@ DBSocketLinker.prototype.create = function(type, data, cb){
 
 
 /**
- * @function send_update
+ * @function DBSocketLinker#send_update
  * @description Sends an update query to the database
  * @param args - The type and data of the object to be updated
- * @param callback - The callback that will be called at the end
+ * @param cb - The callback that will be called at the end
  */
 DBSocketLinker.prototype.send_update = function(args, cb){
     let query = null, column = null;
@@ -173,10 +192,10 @@ DBSocketLinker.prototype.send_update = function(args, cb){
 }
 
 /**
- * @function send_delete
- * @description Sends an delete query to the database
+ * @function DBSocketLinker#send_delete
+ * @description Sends a delete query to the database
  * @param args - The type and data of the object to be deleted
- * @param callback - The callback that will be called at the end
+ * @param cb - The callback that will be called at the end
  */
 DBSocketLinker.prototype.send_delete = function(args, cb){
     let query = null, column = null;

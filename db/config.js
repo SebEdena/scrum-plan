@@ -1,6 +1,6 @@
 /**
  * @file config.js
- * Module for datbase handling
+ * Module for communication with the server
  * @author Sébastien Viguier
  * @module config.js
  */
@@ -19,8 +19,11 @@ let client = null, view = null, channel_send = null, app = null;
 
 /**
  * @function init_client
- * @description Initializes the client that will connect to the database
+ * @description Initializes the socket that will connect to the server
  * @param callback - The callback that will be called at the end
+ * @listens socket:error - Any error in the communication with the server
+ * @listens socket:srvError - An error linked to the database unavailability
+ * @see sendAppError
  */
 function init_client(callback){
     socket = io(serverSettings.uri,
@@ -54,6 +57,11 @@ function init_client(callback){
     callback(null);
 }
 
+/**
+ * @function sendAppError
+ * @description Sends an error dialog to the app for errors that could happen at any time
+ * @param type - The error type
+ */
 function sendAppError(type){
     let msg = "Error : an unknown error occured.";
     switch(type){
@@ -73,6 +81,13 @@ function sendAppError(type){
     });
 }
 
+/**
+ * @function needsNotification
+ * @description Checks if the realtime notification needs to be notified to frontend
+ * @param type - The type of notification : update, delete, insert
+ * @param date - The data of the notification
+ * @returns true if is needed, or false if not
+ */
 function needsNotification(type, data){
     if(type === "projects"){
         return true;
@@ -87,10 +102,10 @@ function needsNotification(type, data){
 
 /**
  * @function fetch
- * @description Asks to load a particular type of object from database.
- * If it is already loaded, it does not do anything but calling the callback
+ * @description Asks to load a particular type of object from the server.
  * @param type - The type of data that needs to be fetched
- * @param cb - The callback that will be called at the end
+ * @param data - The data associated to the type
+ * @returns true if the type of data has already been loaded, false if not.
  */
 function fetch(type, data){
     if(!global.loaded[type]){
@@ -120,9 +135,10 @@ function fetch(type, data){
 
 /**
  * @function load
- * @description Load a particular type of object from database
+ * @description Ask the server to load a particular type of object from the server
  * @param type - The type of data that needs to be loaded
- * @param cb - The callback that will be called at the end
+ * @fires socket:load
+ * @see loaded
  */
 function load(type){
     let data = {};
@@ -130,6 +146,13 @@ function load(type){
     socket.emit('load', {type: type, data: data});
 }
 
+/**
+ * @function loaded
+ * @description Function call when a type of data has been retrieved from the server
+ * @param args - The raw data
+ * @param cb - The callback that will be called at the end
+ * @see socket:loaded
+ */
 function loaded(args, cb){
     for(let obj of args.data){
         global.data[args.type][obj.id] = obj;
@@ -185,10 +208,10 @@ function loaded(args, cb){
 
 /**
  * @function create
- * @description Inserts a new row in the database corresponding to an object
+ * @description Ask the server to create a new object
  * @param type - The type of data that needs to be inserted
  * @param data - The data to be inserted
- * @param callback - The callback that will be called at the end
+ * @fires socket:create
  */
 function create(type, data){
     if(global.data.current) data.project = global.data.current.id;
@@ -369,10 +392,9 @@ function delete_item(item, type, callback){
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour on create item event
- * @listens ipcMain#create
+ * @listens ipcMain:create
  * @param event - The event
  * @param args - Parameters of the event
- * @fires ipcRenderer#created
  * @see create
  */
 ipcMain.on("create", (event, args) => {
@@ -408,7 +430,7 @@ ipcMain.on("create", (event, args) => {
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour on open project event
- * @listens ipcMain#open_project
+ * @listens ipcMain:open_project
  * @param event - The event
  * @param args - Parameters of the event
  */
@@ -426,10 +448,10 @@ ipcMain.on("open_project", (event, args)=>{
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour on fetch data event
- * @listens ipcMain#fetch
+ * @listens ipcMain:fetch
  * @param event - The event
  * @param args - Parameters of the event
- * @fires ipcRenderer#fetched
+ * @fires ipcRenderer:fetched - When the type of data has already been fetched
  * @see fetch
  */
 ipcMain.on("fetch", (event, args) => {
@@ -442,10 +464,9 @@ ipcMain.on("fetch", (event, args) => {
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour on load data event
- * @listens ipcMain#load
+ * @listens ipcMain:load
  * @param event - The event
  * @param args - Parameters of the event
- * @fires ipcRenderer#loaded
  * @see load
  */
 ipcMain.on("load", (event, args) => {
@@ -470,11 +491,10 @@ ipcMain.on("load", (event, args) => {
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour on update data event
- * @listens ipcMain#update
+ * @listens ipcMain:update
  * @param event - The event
  * @param args - Parameters of the event
- * @fires ipcRenderer#error
- * @see send_update
+ * @fires socket:update
  */
 ipcMain.on('update', (event, args) => {
     if(global.data.current) args.data.project = global.data.current.id;
@@ -505,11 +525,10 @@ ipcMain.on('update', (event, args) => {
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour on delete data event
- * @listens ipcMain#delete
+ * @listens ipcMain:delete
  * @param event - The event
  * @param args - Parameters of the event
- * @fires ipcRenderer#error
- * @see send_delete
+ * @fires socket:delete
  */
 ipcMain.on('delete', (event, args) => {
     if(global.data.current) args.data.project = global.data.current.id;
@@ -537,6 +556,28 @@ ipcMain.on('delete', (event, args) => {
 //     });
 // });
 
+/**
+ * @function initSocketEvents
+ * @description Initializes events coming from the server
+ * @param cb - The callback that will be called at the end
+ * @listens socket:loaded - When data has been loaded
+ * @listens socket:created - When data has been created by the app
+ * @listens socket:insert - When data has been created by any app
+ * @listens socket:update - When data has been updated by any app
+ * @listens socket:delete - When data has beed deleted by any app
+ * @listens socket:dbError - When an error happend with a SQL query
+ * @fires ipcRenderer:loaded - To inform the app that data is ready
+ * @fires ipcRenderer:fetched - To inform the app that data has been fetched
+ * @fires ipcRenderer:created - To inform the app that data has been created
+ * @fires ipcRenderer:insert - To inform the app that data has been inserted
+ * @fires ipcRenderer:update - To inform the app that data has been updated
+ * @fires ipcRenderer:delete - To inform the app that data has been deleted
+ * @fires ipcRenderer:error - To inform the app of any error with the data
+ * @see needsNotification
+ * @see loaded
+ * @see update_item
+ * @see delete_item
+ */
 function initSocketEvents(cb){
 
     socket.on('loaded', (args)=>{
@@ -589,7 +630,7 @@ module.exports = {
 
     /**
      * @function verify_credentials
-     * @description Checks that the given database credentials are correct
+     * @description Checks that the given server credentials are correct
      * @param callback - The callback that will be called at the end
      */
     verify_credentials: function(callback){
@@ -628,8 +669,11 @@ module.exports = {
 
     /**
      * @function connect
-     * @description Asks the client to connect to the database
+     * @description Asks the client to connect to the server and register associated events
      * @param callback - The callback that will be called at the end
+     * @listens socket:connect_error - When an error occured with the connection
+     * @listens socket:srvError - When the server has issues with the database
+     * @listens socket:srvInfo - When the server can serve the client
      */
     connect: function(callback){
         socket.connect();
@@ -653,6 +697,12 @@ module.exports = {
         });
     },
 
+    /**
+     * @function init_events
+     * @desc Calls the functions for event definition.
+     * @param cb - The callback that will be called at the end
+     * @see initSocketEvents
+     */
     init_events: function(cb){
         initSocketEvents(cb);
     },
@@ -682,7 +732,7 @@ module.exports = {
 
     /**
      * @function disconnect
-     * @description Asks the client to disconnect to the database
+     * @description Asks the client to disconnect from the socket
      */
     disconnect: function(){
         socket.close();

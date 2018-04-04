@@ -14,11 +14,9 @@
     "dragula": "^3.7.2",
     "jquery": "^3.2.1",
     "jquery-validation": "^1.17.0",
-    "pg": "^7.3.0",
     "photon": "git+https://github.com/connors/photon.git",
     "popper.js": "^1.12.6",
-    "socket.io": "^2.0.4",
-    "yarn": "^1.5.1"
+    "socket.io": "^2.0.4"
   },
   "devDependencies": {
     "electron": "1.8.4",
