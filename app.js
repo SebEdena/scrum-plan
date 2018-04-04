@@ -10,10 +10,10 @@ const BrowserWindow = require("electron").BrowserWindow;
 const async = require('async');
 
 /**
- * Requiring the database handler module
+ * Requiring the server communication module
  * @see db/config.js
  */
-let db = require('./db/config.js');
+let srv = require('./db/config.js');
 
 let mainWindow = null; //The window being shown to the user
 
@@ -39,9 +39,9 @@ global.loaded = {
 /**
  * @function
  * @description Main function of the app.
-   Connects to the database and loads the GUI.
- * @listens app#ready
- * @listens mainWindow#dom-ready
+   Connects to the server and loads the GUI.
+ * @listens app:ready
+ * @listens mainWindow:dom-ready
  */
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
@@ -53,7 +53,7 @@ app.on("ready", function(){
         backgroundColor: "#ede8e8"
     });
 
-    db.verify_credentials((err)=>{
+    srv.verify_credentials((err)=>{
         if(err){
             dialog.showMessageBox({title: 'Scrum Assistant',
                 type: 'error',
@@ -72,15 +72,13 @@ app.on("ready", function(){
 
 /**
  * @function connect
- * @description Defines the functions to call to initialize the databse link
+ * @description Defines the functions to call to initialize the server link
  */
 function connect(){
     async.waterfall([
-        // help_init,
-        async.apply(db.init, mainWindow, app), //initiazes the variables
-        db.connect, //connects to the database
-        db.init_events,
-        // db.init_realtime //registers the app as a listener of the database changes
+        async.apply(srv.init, mainWindow, app), //initiazes the variables
+        srv.connect, //connects to the server
+        srv.init_events //initializes socket events
     ], function (err, res) {
         if(err){
             mainWindow.webContents.send('error', {type: "connection", err: err});
@@ -92,20 +90,10 @@ function connect(){
     });
 }
 
-// /**
-//  * @function help_init
-//  * @description Helper for the connection phase
-//  * Initiates the first function
-//  * @param callback - The callback used to communicate between functions
-//  */
-// function help_init(callback){
-//     callback(null, mainWindow, app);
-// }
-
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour on action event
- * @listens  ipcMain#action
+ * @listens  ipcMain:action
  * @param event - The event
  * @param args - Parameters of the event
  */
@@ -122,16 +110,16 @@ ipcMain.on("action", (event, args) => {
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour when exiting the application
- * @listens app#will-quit
+ * @listens app:will-quit
  */
 app.once('will-quit', ()=>{
-    db.disconnect();
+    srv.disconnect();
 });
 
 /**
  * @function
  * @description EVENT HANDLER - Defines behaviour when all the windows are closed
- * @listens app#window-all-closed
+ * @listens app:window-all-closed
  */
 // app.on('window-all-closed', app.quit);
 
@@ -139,7 +127,7 @@ app.once('will-quit', ()=>{
  * @function
  * @description EVENT HANDLER - Defines behaviour when exiting the application
    Technical quit, not the app itself
- * @listens app#before-quit
+ * @listens app:before-quit
  */
 // app.on('before-quit', () => {
 //      mainWindow.removeAllListeners('close');

@@ -89,7 +89,6 @@ DBSocketLinker.prototype.initEvents = function(){
  */
 DBSocketLinker.prototype.load = function(type, data, cb){
     let query = null;
-    console.log(data);
     switch (type) {
         case "projects": query = {
                             name: 'fetch-projects',

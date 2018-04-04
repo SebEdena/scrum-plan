@@ -21,7 +21,6 @@ $(document).ready(($)=>{
      * @see load_projects
      */
     ipcRenderer.on("fetched", (event, args) => {
-        console.log(args);
         if(!args.err){
             switch(args['type']){
                 case "projects": load_projects(); break;

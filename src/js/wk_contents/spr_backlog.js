@@ -94,7 +94,6 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('update', (event, args)=>{
         if(args.type === "user_stories"){
-            console.log(args);
             if($('#spr_us'+args.data.id).length === 0){
                 fill_sprint_us(args.data);
             }else{

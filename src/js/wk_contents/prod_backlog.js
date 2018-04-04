@@ -187,7 +187,6 @@ $(document).ready(($)=>{
      */
     function fill_all_us(){
         let us = remote.getGlobal('data').user_stories;
-        console.log(us);
         for(let i in us){
             fill_us(us[i]);
         }
