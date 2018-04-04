@@ -1,5 +1,5 @@
 const packager = require('electron-packager');
-let src="src", dest="app", db="db/settings/settings_local.json";
+let src="src", dest="app", dbSettings="db/settings/settings_local.json";
 
 let packagerOpts = {
     "win32-ia32": {
@@ -17,6 +17,7 @@ let packagerOpts = {
         ignore: [
             "db/server_side",
             "db/settings",
+            "db/config.js",
             "spec",
             "src",
             ".gitignore",
@@ -41,13 +42,13 @@ module.exports = (grunt) => {
             },
             dev_spec: {
                 expand:true,
-                src: db,
+                src: dbSettings,
                 dest: '.',
                 rename: function(){ return 'settings.json' }
             },
             build_spec:{
                 expand: true,
-                src: db,
+                src: dbSettings,
                 dest: grunt.option('build_dest') + "/settings.json",
                 rename: function(){ return grunt.option('build_dest')
                         + "/settings.json"; }
@@ -84,11 +85,15 @@ module.exports = (grunt) => {
         },
         uglify: {
             app: {
-                files: [{
+                files: [
+                {
                     expand: true,
                     cwd: src + '/js',
                     src: ['**/*.js',],
                     dest: dest + '/js'
+                },
+                {
+                    'db/config.min.js': ['db/config.js']
                 }]
             }
         },

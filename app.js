@@ -13,7 +13,7 @@ const async = require('async');
  * Requiring the server communication module
  * @see db/config.js
  */
-let srv = require('./db/config.js');
+let srv = require('./db/config.min.js');
 
 let mainWindow = null; //The window being shown to the user
 
