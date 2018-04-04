@@ -18,7 +18,7 @@ $(document).ready(($) => {
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on loaded data event
-     * @listens ipcRenderer#loaded
+     * @listens ipcRenderer:loaded
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -31,7 +31,7 @@ $(document).ready(($) => {
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on error event
-     * @listens ipcRenderer#error
+     * @listens ipcRenderer:error
      * @param event - The event
      * @param args - Parameters of the event
      */

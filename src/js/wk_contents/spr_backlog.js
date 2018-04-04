@@ -16,7 +16,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on fetched event
-     * @listens ipcRenderer#fetched
+     * @listens ipcRenderer:fetched
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -38,7 +38,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on created event
-     * @listens ipcRenderer#created
+     * @listens ipcRenderer:created
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -55,7 +55,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on insert event
-     * @listens ipcRenderer#insert
+     * @listens ipcRenderer:insert
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -72,7 +72,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on delete event
-     * @listens ipcRenderer#delete
+     * @listens ipcRenderer:delete
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -88,7 +88,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on update event
-     * @listens ipcRenderer#update
+     * @listens ipcRenderer:update
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -141,7 +141,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on error event
-     * @listens ipcRenderer#error
+     * @listens ipcRenderer:error
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -281,7 +281,7 @@ $(document).ready(($)=>{
      * @function handle_edit
      * @description Handles the click on an "Edit" button
      * @param item - The html node of the user story
-     * @fires ipcMain#update
+     * @fires ipcMain:update
      */
     function handle_edit(item){
         let btn = item.find('#spr_total_edit');

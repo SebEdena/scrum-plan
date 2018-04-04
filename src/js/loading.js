@@ -16,10 +16,10 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour on error event to check
        for any connection error with the database.
-     * @listens ipcRenderer#error
+     * @listens ipcRenderer:error
      * @param event - The event
      * @param args - Parameters of the event
-     * @fires ipcMain#action to quit or reconnect the app with the database
+     * @fires ipcMain:action to quit or reconnect the app with the database
      */
     ipcRenderer.on('error', (event, args) => {
         let errCause = (typeof args.err === "string")?args.err:args.err.type;

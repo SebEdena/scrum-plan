@@ -15,7 +15,7 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour on fetched item event
        and calls load_projects function
-     * @listens ipcRenderer#fetched
+     * @listens ipcRenderer:fetched
      * @param event - The event
      * @param args - Parameters of the event
      * @see load_projects
@@ -65,7 +65,7 @@ $(document).ready(($)=>{
        create_pj_form form.
      * @param e - The event
      * @listens #create_pj_form:submit
-     * @fires ipcMain#create
+     * @fires ipcMain:create
      */
     $("#create_pj_form").on("submit", (e)=>{
         e.preventDefault();
@@ -80,7 +80,7 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour after receiving insert
        event from ipcMain
-     * @listens ipcRenderer#insert
+     * @listens ipcRenderer:insert
      * @param event - The event
      * @param args - Parameters of the event
      * @see insert_project
@@ -98,7 +98,7 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour after receiving update
        event from ipcMain
-     * @listens ipcRenderer#update
+     * @listens ipcRenderer:update
      * @param event - The event
      * @param args - Parameters of the event
      * @see update_project
@@ -113,7 +113,7 @@ $(document).ready(($)=>{
      * @function
      * @description EVENT HANDLER - Defines behaviour after receiving created
        event from ipcMain
-     * @listens ipcRenderer#created
+     * @listens ipcRenderer:created
      * @param event - The event
      * @param args - Parameters of the event
      * @see pj_msg
@@ -153,7 +153,7 @@ $(document).ready(($)=>{
      * @function insert_project
      * @description Inserts a new project
      * @param data - The data of the project
-     * @fires ipcMain#open_project
+     * @fires ipcMain:open_project
      */
     function insert_project(data){
         let div = $.parseHTML(`
@@ -180,7 +180,7 @@ $(document).ready(($)=>{
      * @description Displays a message for a created event status, whether the
        project was successfully created or not.
      * @param args - The data of the created event result
-     * @fires ipcMain#create
+     * @fires ipcMain:create
      */
     function pj_msg(args){
         if(args.type === "project"){

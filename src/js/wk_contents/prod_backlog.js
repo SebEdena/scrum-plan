@@ -14,7 +14,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on fetched event
-     * @listens ipcRenderer#fetched
+     * @listens ipcRenderer:fetched
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -31,7 +31,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on created event
-     * @listens ipcRenderer#created
+     * @listens ipcRenderer:created
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -65,7 +65,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on update event
-     * @listens ipcRenderer#update
+     * @listens ipcRenderer:update
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -93,7 +93,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on delete event
-     * @listens ipcRenderer#delete
+     * @listens ipcRenderer:delete
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -106,7 +106,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on insert event
-     * @listens ipcRenderer#insert
+     * @listens ipcRenderer:insert
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -119,7 +119,7 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on error event
-     * @listens ipcRenderer#error
+     * @listens ipcRenderer:error
      * @param event - The event
      * @param args - Parameters of the event
      */
@@ -238,7 +238,7 @@ $(document).ready(($)=>{
      * @function init_create
      * @description Initializes the events on a newly created user story
      * @param item - The html node of the user story
-     * @fires ipcMain#create
+     * @fires ipcMain:create
      */
     function init_create(item){
         item.find('input[name="feature"]').trigger('focus');
@@ -441,7 +441,7 @@ $(document).ready(($)=>{
      * @description Gather the data and sends update request for a user story
      * @param item - The user story to updated
      * @param form - The form of the user story
-     * @fires ipcMain#update
+     * @fires ipcMain:update
      */
     function update_us(item, form){
         let data = {
@@ -483,7 +483,7 @@ $(document).ready(($)=>{
      * @description Updates the sprint total point of a user story that has an estimate overflow
      * @param us - The data of the user story
      * @param sprint - The data of the sprint
-     * @fires ipcMain#update
+     * @fires ipcMain:update
      */
     function sprint_update_for_overflow(us, sprint){
         if(!us_update.hasOwnProperty(sprint.id)){
@@ -523,7 +523,7 @@ $(document).ready(($)=>{
      * @description Removes an us from the sprint when its estimate overflows
      * @param us - The data of the user story
      * @param sprint - The data of the sprint
-     * @fires ipcMain#update
+     * @fires ipcMain:update
      */
     function remove_us_sprint(us, sprint){
         us_sprint_update.push(us.id);

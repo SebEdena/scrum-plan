@@ -51,11 +51,11 @@ function init(server){
 /**
  * @function init_events
  * @description Initializes the events that the module will listen to
- * @listens io#connection - Everytime a new socket is created from a client app
- * @listens io#disconnect - Everytime a socket is disconnected from a client app
- * @listens pool#error - Any error from the pool of client available for client apps
- * @fires socket#srvError - To inform a client of the server being unavailable
- * @fires socket#srvInfo - To inform a client of the server availability
+ * @listens io:connection - Everytime a new socket is created from a client app
+ * @listens io:disconnect - Everytime a socket is disconnected from a client app
+ * @listens pool:error - Any error from the pool of client available for client apps
+ * @fires socket:srvError - To inform a client of the server being unavailable
+ * @fires socket:srvInfo - To inform a client of the server availability
  * @see DBSocketLinker
  */
 function init_events(){
@@ -135,7 +135,7 @@ function db_connect(callback){
  * @description Initializes the realtime data management
  * @listens notification from PostgreSQL
  * @param callback - The callback that will be called at the end
- * @fires io#insert|update|delete - The notification to send to the clients
+ * @fires io:insert|update|delete - The notification to send to the clients
  */
 function db_realtime(callback){
     db.query("LISTEN insert; LISTEN update; LISTEN delete", (err,res) => {
@@ -155,7 +155,7 @@ function db_realtime(callback){
  * @function db_status
  * @description Switches the database availability status for the server
  * @param online - The status of the database to switch
- * @fires io#srvError when database availability is switched to false
+ * @fires io:srvError when database availability is switched to false
  */
 function db_status(online){
     console.log('Switching db status to online='+online);
