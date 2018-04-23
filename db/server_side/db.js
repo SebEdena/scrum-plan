@@ -106,6 +106,13 @@ DBSocketLinker.prototype.load = function(type, data, cb){
                             text: 'SELECT sp.* FROM sprints sp WHERE sp.project=$1 ORDER BY sp.id',
                             values: [data.project]
                         };
+                        break;
+        case "us_sprints": query = {
+                            name: 'fetch-all-us-sprints',
+                            text: 'SELECT usp.* FROM us_sprints usp WHERE usp.project=$1 ORDER BY usp.id',
+                            values: [data.project]
+                        };
+                        break;
         default: break;
     }
     if(query){
@@ -156,8 +163,6 @@ DBSocketLinker.prototype.create = function(type, data, cb){
         cb(res.rows[0]);
     });
 }
-
-
 
 /**
  * @function DBSocketLinker#send_update

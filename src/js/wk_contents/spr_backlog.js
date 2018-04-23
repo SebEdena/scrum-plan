@@ -23,7 +23,9 @@ $(document).ready(($)=>{
     ipcRenderer.on("fetched", (event, args) => {
         if(!(args.err || ~asked_fetch['spr_backlog'].indexOf(args.type))){
             switch(args['type']){
-                case "user_stories": ipcRenderer.send("fetch", {type:"sprints"});
+                case "user_stories": ipcRenderer.send("fetch", {type:"us_sprints"});
+                                     break;
+                case "us_sprints": ipcRenderer.send("fetch", {type:"sprints"});
                                      break;
                 case "sprints": init_containers();
                                 fill_all_sprints();
@@ -122,7 +124,7 @@ $(document).ready(($)=>{
                     title: args.data.feature
                 });
             }
-        } // 17 63 26 22
+        }
         if(args.type === "sprints"){
             let item = $('#spr_'+args.data.id);
             let diff_pts = Decimal.sub(args.data.points,item.data('total'));
@@ -188,28 +190,33 @@ $(document).ready(($)=>{
      */
     function fill_all_sprint_us(){
         let us = remote.getGlobal('data').user_stories;
-        for(let i in us){
-            fill_sprint_us(us[i]);
+        let usp = remote.getGlobal('data').us_sprints;
+        for(let i in usp){
+            let item = usp[i];
+            fill_sprint_us(item, us[item.us]);
         }
     }
 
     /**
      * @function fill_sprint_us
      * @description Inserts a user story
+     * @param us_sp - The data of the user story - sprint link
      * @param us - The data of the user story
      */
-    function fill_sprint_us(us){
-        let html = `<div class="col-xl-6 spr_user_story d-flex flex-row justify-content-around rounded" id="spr_us${us.id}">
-                        <p>US#${us.id} <small class="text-muted">Estimated: ${parseFloat(us.estimate)}</small></p>
+    function fill_sprint_us(us_sp, us){
+        let html = `<div class="col-xl-6 spr_user_story d-flex flex-row justify-content-around rounded" id="spr_us${us_sp.us}">
+                        <p>US#${us_sp.us} <small class="text-muted">Estimated: ${parseFloat(us_sp.estimate)}</small></p>
                     </div>`;
         $("#spr_us").append($(html));
-        $('#spr_us' + us.id).data('id', us.id);
-        $('#spr_us' + us.id).data('estimate', new Decimal(us.estimate));
-        $('#spr_us' + us.id).tooltip({
-            placement: 'top',
-            title: us.feature
-        });
-        assign_us_to_sprint($('#spr_us'+us.id), us.sprint, false);
+        $('#spr_us' + us_sp.us).data('id', us_sp.us);
+        $('#spr_us' + us_sp.us).data('estimate', new Decimal(us_sp.estimate));
+        if(us){
+            $('#spr_us' + us_sp.us).tooltip({
+                placement: 'top',
+                title: us.feature
+            });
+        }
+        assign_us_to_sprint($('#spr_us'+us_sp.us), us_sp.sprint, false);
     }
 
     /**

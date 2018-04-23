@@ -24,7 +24,8 @@ global.data = {
     projects: {},
     current: null,
     user_stories: {},
-    sprints: {}
+    sprints: {},
+    us_sprints: {}
 };
 
 /**
