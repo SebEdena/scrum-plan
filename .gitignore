@@ -1,4 +1,6 @@
 node_modules
-db/settings*.json
-db/init_*.sql
+db/settings
+settings.json
 release-builds
+db/server_side/ssl
+db/server_side/settings

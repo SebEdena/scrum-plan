@@ -1,0 +1,104 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="../css/home.css">
+    <link type="text/css" rel="stylesheet" href="../css/global.css">
+    <script type="text/javascript" src="../js/bundle.js"></script>
+    <script>global.jQuery = global.$ = require('jquery'); global.Popper=require("popper.js");</script>
+    <script type="text/javascript" src="../../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../js/global.js"></script>
+</head>
+<body>
+    <div class="jumbotron jumbotron-fluid img-fluid m-0" id="welcome">
+        <div class="container">
+            <h1 class="display-3" id="welcome_txt">Welcome back to your Scrum Assistant !</h1>
+            <hr class="my-4">
+            <p>Here's what you can do...</p>
+            <p class="lead">
+                <a class="btn btn-lg btn-info" role="button" id="open">Open project</a>
+                <a class="btn btn-lg btn-info" role="button" id="create">New project</a>
+            </p>
+        </div>
+    </div>
+    <!-- <div class="container mt-5">
+        <h2>Previous projects</h2>
+        <table class="table table-borderless table-hover table-sm">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Title</th>
+                    <th scope="col">Description</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th scope="row">1</th>
+                    <td>Mark</td>
+                    <td>Otto</td>
+                    <td><a role="button" class="btn btn-success btn-sm" href="#">Open</a></td>
+                </tr>
+                <tr>
+                    <th scope="row">2</th>
+                    <td>Jacob</td>
+                    <td>Thornton</td>
+                    <td><a role="button" class="btn btn-success btn-sm" href="#">Open</a></td>
+                </tr>
+                <tr>
+                    <th scope="row">3</th>
+                    <td>Larry</td>
+                    <td>the Bird</td>
+                    <td><a role="button" class="btn btn-success btn-sm" href="#">Open</a></td>
+                </tr>
+            </tbody>
+        </table>
+    </div> -->
+    <div class="modal fade" id="modal_open_project" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Open a project</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid" id="html_open_project">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modal_create_project" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Create a project</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid" id="html_create_project">
+                        <form id="create_pj_form">
+                            <div class="form-group">
+                                <label for="input_pj_name">Name</label>
+                                <input type="text" class="form-control" id="input_pj_name" placeholder="Name of the project" maxlength="128" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="input_pj_desc">Description</label>
+                                <textarea class="form-control" id="input_pj_desc" rows="3" placeholder="Description of the project (optional)" maxlength="256"></textarea>
+                            </div>
+                            <div class="text-right">
+                                <button id="create_submit" type="submit" class="btn btn-success">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="../js/home.js"></script>
+</html>

@@ -1,0 +1,33 @@
+.nav-group-item *, .tab-group * {
+    cursor:pointer;
+}
+
+.nav-group-item > .icon {
+    margin-top: 1.5px;
+}
+
+.nav-group-item{
+    -webkit-transition: background-color 0.5s;
+}
+
+.nav-group-item:hover{
+    background-color: #dbdada;
+}
+
+.tab-group {
+    background-color: rgb(240, 240, 240) !important;
+    position: relative;
+    z-index: 100;
+}
+
+.tab-item {
+    background-color: rgb(232, 232, 232) !important;
+}
+
+.active{
+    background-color: #cfcccc !important;
+}
+
+.pane {
+    overflow-y: scroll;
+}

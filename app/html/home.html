@@ -1,19 +1,19 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
     <link href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="../css/home.css">
     <link type="text/css" rel="stylesheet" href="../css/global.css">
     <script type="text/javascript" src="../js/bundle.js"></script>
-    <script>var $ = require("jquery"); var Popper=require("popper.js");</script>
+    <script>global.jQuery = global.$ = require('jquery'); global.Popper=require("popper.js");</script>
     <script type="text/javascript" src="../../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../js/global.js"></script>
 </head>
 <body>
     <div class="jumbotron jumbotron-fluid img-fluid m-0" id="welcome">
         <div class="container">
-            <h1 class="display-3">Welcome back to your Scrum Assistant !</h1>
+            <h1 class="display-3" id="welcome_txt">Welcome back to your Scrum Assistant !</h1>
             <hr class="my-4">
             <p>Here's what you can do...</p>
             <p class="lead">
@@ -65,7 +65,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="container-fluid" id="html_open_project"></div>
+                    <div class="container-fluid" id="html_open_project">Loading...</div>
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
     <link href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="../../node_modules/photon/dist/css/photon.css" rel="stylesheet">
     <link href="../../node_modules/dragula/dist/dragula.min.css" rel="stylesheet">
@@ -9,8 +9,8 @@
     <link type="text/css" rel="stylesheet" href="../css/global.css">
     <script type="text/javascript" src="../js/bundle.js"></script>
     <script>
-        const $ = require("jquery");
-        const Popper = require("popper.js");
+        global.jQuery = global.$ = require('jquery');
+        global.Popper = require('popper.js');
         require('jquery-validation');
         const {Decimal} = require('decimal.js');
     </script>
@@ -51,7 +51,6 @@
       </div>
     </div>
   </div>
-</div>
 </body>
 <script>let dragula = require('dragula');</script>
 <script type="text/javascript" src="../js/workspace.js"></script>

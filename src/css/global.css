@@ -1,0 +1,15 @@
+a, button:enabled, input:enabled, textarea:enabled, .nav-group-item{
+    cursor:pointer !important;
+}
+
+input:focus, textarea:focus{
+    cursor:text !important;
+}
+
+.table-borderless td, .table-borderless th {
+    border: none;
+}
+
+.btn {
+    color: white !important;
+}
