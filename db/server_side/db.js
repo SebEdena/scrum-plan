@@ -126,6 +126,15 @@ DBSocketLinker.prototype.load = function(type, data, cb){
     }
 }
 
+DBSocketLinker.prototype._classicQuery = function(query, needResult, cb){
+    this.db.query(query, (err, res) => {
+        if(err){
+            cb(err); return;
+        }
+        (needResult && res)?cb(res.rows[0]):cb(null);
+    });
+}
+
 /**
  * @function DBSocketLinker#create
  * @description Inserts a new row in the database corresponding to an object
@@ -134,34 +143,41 @@ DBSocketLinker.prototype.load = function(type, data, cb){
  * @param cb - The callback that will be called at the end
  */
 DBSocketLinker.prototype.create = function(type, data, cb){
-    let query = null;
     switch(type){
-        case "project": query = {
-                        name: "create-project",
-                        text: "INSERT INTO projects(title, description) VALUES ($1, $2) RETURNING projects.*",
-                        values: [data.title, data.description]
-                        };
-                        break;
-        case "us": query = {
-                      name: "create-user-story",
-                      text: "INSERT INTO user_stories (feature, logs, estimate, project) VALUES ($1, $2, $3, $4) RETURNING user_stories.*",
-                      values: [data.feature, data.logs, data.estimate, data.project]
-                      };
-                      break;
-        case "sprint": query = {
-                        name: "create-sprint",
-                        text: "INSERT INTO sprints (project) VALUES ($1) RETURNING sprints.*",
-                        values: [data.project]
-                        };
-                        break;
-        default: break;
+        case "project": this._classicQuery({
+                                text: "INSERT INTO projects(title, description) VALUES ($1, $2) RETURNING projects.*",
+                                values: [data.title, data.description]}, true, cb); break;
+        case "us": this._transacCreate(type, data, cb); break;
+        case "sprint": this._classicQuery({
+                                text: "INSERT INTO sprints (project) VALUES ($1) RETURNING sprints.*",
+                                values: [data.project]}, true, cb); break;
+        default: cb(new Error("Invalid Data Type")); break;
     }
-    this.db.query(query, (err, res) => {
-        if(err){
-            cb(err); return;
+}
+
+DBSocketLinker.prototype._transacCreate = async function(type, data, cb){
+    if(['us'].includes(type)){
+        const client = await this.db.connect();
+        let res = null;
+        try{
+            await client.query("BEGIN");
+            if(type === "us"){
+                res = await client.query({
+                    text: "INSERT INTO user_stories (feature, logs, estimate, project) VALUES ($1, $2, $3, $4) RETURNING user_stories.*",
+                    values: [data.feature, data.logs, data.estimate, data.project]});
+                await client.query({
+                    text: "INSERT INTO us_sprints (project, us, estimate) VALUES ($1, $2, $3)",
+                    values: [data.project, res.rows[0].id, res.rows[0].estimate]});
+            }
+            await client.query("COMMIT");
+            cb(res.rows[0]);
+        }catch(e){
+            await client.query("ROLLBACK");
+            cb(e);
+        }finally{
+            client.release();
         }
-        cb(res.rows[0]);
-    });
+    }
 }
 
 /**

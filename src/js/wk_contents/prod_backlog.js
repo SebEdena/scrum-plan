@@ -7,9 +7,10 @@
 let tmp_us = []; //Array of us not validated by the database yet
 let us_update = {}; //Array of sprints containing user stories to be updated after sprint update
 let us_sprint_update = []; //Array of user stories to be updated once removed from sprint
+let locked = {};
 
 $(document).ready(($)=>{
-    ipcRenderer.send("fetch", {type:"user_stories"});//Asks to fetch the user_stories
+    ipcRenderer.send("fetch", {type:"us_sprints"});//Asks to fetch the user_stories
 
     /**
      * @function
@@ -21,6 +22,9 @@ $(document).ready(($)=>{
     ipcRenderer.on("fetched", (event, args) => {
         if(!(args.err || ~asked_fetch['prod_backlog'].indexOf(args.type))){
             switch(args['type']){
+                case "us_sprints": check_us();
+                                   ipcRenderer.send("fetch", {type:"user_stories"});
+                                   break;
                 case "user_stories": fill_all_us(); break;
                 default: break;
             }
@@ -79,7 +83,11 @@ $(document).ready(($)=>{
                 $("#us"+args.data.id).find('#desc').val(args.data.logs);
                 $("#us"+args.data.id).find('#est').val(adjust_display(args.data.estimate));
             }
-            $('#us'+args.data.id).find("button").prop("disabled", false);
+            if(locked(args.data.id)){
+                $('#us'+args.data.id).find("button:not(#del)").prop("disabled", false);
+            }else{
+                $('#us'+args.data.id).find("button").prop("disabled", false);
+            }
         }
         if(args.type === "sprints"){
             let id = 0;
@@ -112,7 +120,7 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('insert', (event, args) =>{
         if(args.type === "user_stories" && $('#us'+args.data.id).length === 0){
-            fill_us(args.data);
+            fill_us(args.data, args.data.locked);
         }
     });
 
@@ -188,7 +196,7 @@ $(document).ready(($)=>{
     function fill_all_us(){
         let us = remote.getGlobal('data').user_stories;
         for(let i in us){
-            fill_us(us[i]);
+            fill_us(us[i], locked[i]);
         }
     }
 
@@ -197,7 +205,7 @@ $(document).ready(($)=>{
      * @description Fills a user story
      * @param us - The data of the user story
      */
-    function fill_us(us){
+    function fill_us(us, locked){
         let html = `
             <div class="container user_story rounded" id="us${us.id}">
                 <div class="d-flex justify-content-between align-items-end">
@@ -205,7 +213,7 @@ $(document).ready(($)=>{
                     <div>
                         <span class="btn-group">
                             <button type="button" id="ok" class="btn btn-secondary">Edit</button>
-                            <button type="button" id="del" class="btn btn-danger">Delete</button>
+                            <button type="button" id="del" class="btn btn-danger" ${locked?"disabled":""}>Delete</button>
                         </span>
                     </div>
                 </div>
@@ -265,6 +273,19 @@ $(document).ready(($)=>{
         });
     }
 
+    function check_us(){
+        let usp = remote.getGlobal('data').us_sprints;
+        for(let i in usp){
+            let item = usp[i];
+            if(!locked.hasOwnProperty(item.us)){
+                locked[item.us] = false;
+            }else{
+                if(locked[item.us]) continue;
+            }
+            locked[item.us] = locked[item.us] || item.locked;
+        }
+    }
+
     /**
      * @function init_events
      * @description Initializes the events on existing user stories
@@ -285,6 +306,7 @@ $(document).ready(($)=>{
                     }
                 }
                 item.find('#ok').text('Edit').removeClass("btn-success").addClass("btn-secondary");
+                if(locked[item.data('id')]) item.find("#del").prop("disabled", true);
                 item.find('#del').text('Delete');
                 item.find("input, textarea").prop("disabled", true);
             }
@@ -294,9 +316,14 @@ $(document).ready(($)=>{
                 item.find('form').trigger('submit');
                 item.find('#del').text('Delete');
             }else{
-                item.find("input, textarea").prop("disabled", false);
+                if(locked[item.data('id')]){
+                    item.find("input:not(#est), textarea").prop("disabled", false);
+                }else{
+                    item.find("input, textarea").prop("disabled", false);
+                }
                 item.find('#ok').text('Ok');
                 item.find('#del').text('Cancel');
+                if(locked[item.data('id')]) item.find("#del").prop("disabled", false);
                 item.find('#ok').removeClass('btn-secondary').addClass('btn-success');
                 item.find('input[name="feature"]').trigger('focus');
             }

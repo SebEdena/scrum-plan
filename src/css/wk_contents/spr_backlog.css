@@ -1,10 +1,14 @@
 .spr_user_story{
-    background-color: rgb(232, 232, 232);
+    background-color: rgb(255, 139, 131);
     border: 2px solid rgb(180, 180, 180);
+}
+
+.spr_user_story:not(.locked){
+    background-color: rgb(232, 232, 232);
     -webkit-transition: background-color 0.5s;
 }
 
-.spr_user_story:hover{
+.spr_user_story:not(.locked):hover{
     background-color: rgb(221, 221, 221);
 }
 

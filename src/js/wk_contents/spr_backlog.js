@@ -62,12 +62,14 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on('insert', (event, args) =>{
+        console.log(args);
         if(args.type === "sprints" && $("#spr_"+args.data.id).length === 0){
             fill_sprint(args.data);
             $("#spr_"+args.data.id).find('#spr_total_edit').trigger('click');
         }
-        if(args.type === "user_stories" && $("#spr_us"+args.data.id).length === 0){
-            fill_sprint_us(args.data);
+        if(args.type === "us_sprints" && $("#spr_us"+args.data.us).length === 0){
+            console.log("there");
+            fill_sprint_us(args.data, remote.getGlobal("data").user_stories[args.data.us]);
         }
     });
 
@@ -204,19 +206,20 @@ $(document).ready(($)=>{
      * @param us - The data of the user story
      */
     function fill_sprint_us(us_sp, us){
-        let html = `<div class="col-xl-6 spr_user_story d-flex flex-row justify-content-around rounded" id="spr_us${us_sp.us}">
+        let html = `<div class="col-xl-6 spr_user_story ${us_sp.locked===1?"locked":""} d-flex flex-row justify-content-around rounded" id="spr_us${us_sp.id}">
                         <p>US#${us_sp.us} <small class="text-muted">Estimated: ${parseFloat(us_sp.estimate)}</small></p>
                     </div>`;
         $("#spr_us").append($(html));
-        $('#spr_us' + us_sp.us).data('id', us_sp.us);
-        $('#spr_us' + us_sp.us).data('estimate', new Decimal(us_sp.estimate));
+        $('#spr_us' + us_sp.id).data('us', us_sp.us);
+        $('#spr_us' + us_sp.id).data('id', us_sp.id);
+        $('#spr_us' + us_sp.id).data('estimate', new Decimal(us_sp.estimate));
         if(us){
-            $('#spr_us' + us_sp.us).tooltip({
+            $('#spr_us' + us_sp.id).tooltip({
                 placement: 'top',
                 title: us.feature
             });
         }
-        assign_us_to_sprint($('#spr_us'+us_sp.us), us_sp.sprint, false);
+        assign_us_to_sprint($('#spr_us'+us_sp.id), us_sp.sprint, false);
     }
 
     /**
@@ -355,6 +358,9 @@ $(document).ready(($)=>{
             moves: function (el, source, handle, sibling) {
                 return $(el).hasClass('spr_user_story');
             },
+            invalid: function (el, handle) {
+                return $(el).hasClass('locked');
+            }
         });
         drake.containers.push($('#spr_us')[0]);
         drake.on('drop', (el, target, source, sibling) => {
@@ -382,7 +388,7 @@ $(document).ready(($)=>{
      * @param source - The id of the source sprint
      */
     function assign_us_to_sprint(item, sprint, update, source="#spr_us"){
-        let target = (sprint === -1)?$("#spr_us"):$("#spr_"+sprint).find('.spr_us_container');
+        let target = (sprint == null)?$("#spr_us"):$("#spr_"+sprint).find('.spr_us_container');
         let new_source = (source === "#spr_us")?$(source):$(source).find('.spr_us_container');
         $(item).detach().appendTo(target);
         update_points(item, target, new_source, update);
@@ -398,8 +404,9 @@ $(document).ready(($)=>{
      */
     function update_points(el, target, source, update){
         if(!$(target).is($(source)) && $(target).has($(el))){
-            let item = null, new_sp = -1;
+            let item = null, new_sp = null;
             if($(source).prop('id')!=="spr_us"){
+
                 item = $(source).parents().closest(".pj_spr");
                 item.data('pt_left', Decimal.add(item.data('pt_left'),
                                                 $(el).data('estimate')));
