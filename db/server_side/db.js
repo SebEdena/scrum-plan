@@ -187,19 +187,18 @@ DBSocketLinker.prototype._transacCreate = async function(type, data, cb){
  * @param cb - The callback that will be called at the end
  */
 DBSocketLinker.prototype.send_update = function(args, cb){
-    let query = null, column = null;
     switch(args.type){
         case 'us': this._transacUpdate(args.type, args.data, cb); break;
         case 'usp_move': this._classicQuery({
                                     text: 'UPDATE us_sprints SET sprint=$1 WHERE id=$2 AND project=$3 AND locked=0',
                                     values: [args.data.sprint, args.data.id, args.data.project]
-                                }, false, cb); break;
+                              }, false, cb); break;
         case 'usp_remove_overflow': this._transacUpdate(args.type, args.data, cb); break;
         case 'usp_update_overflow': this._transacUpdate(args.type, args.data, cb); break;
         case 'sprint': this._classicQuery({
                                  text: 'UPDATE sprints SET points=$1 WHERE id=$2 AND project=$3',
                                  values: [args.data.points, args.data.id, args.data.project]
-                             }, false, cb); break;
+                            }, false, cb); break;
         default: cb(new Error("Invalid Data Type")); break;
     }
 }
@@ -257,22 +256,42 @@ DBSocketLinker.prototype._transacUpdate = async function(type, data, cb){
  * @param cb - The callback that will be called at the end
  */
 DBSocketLinker.prototype.send_delete = function(args, cb){
-    let query = null, column = null;
+    let query = null;
     switch(args.type){
-        case 'us': query = { name: 'delete-us',
-                             text: 'DELETE FROM user_stories WHERE id=$1 AND project=$2',
-                             values: [args.data.id, args.data.project]
-                         }; column="user_stories"; break;
-        case 'sprint': query = { name: 'delete-sprint',
-                                text: 'DELETE FROM sprints WHERE id=$1 AND project=$2',
-                                values: [args.data.id, args.data.project]
-                            }; column="sprints"; break;
-        default: break;
+        case 'us': this._transacDelete(args.type, args.data, cb); break;
+        case 'sprint': this._transacDelete(args.type, args.data, cb); break;
+        default: cb(new Error("Invalid Data Type")); break;
     }
-    this.db.query(query, (err, res) => {
-        if(err){
-            cb(err);
+}
+
+DBSocketLinker.prototype._transacDelete = async function(type, data, cb){
+    if(['us', 'sprint'].includes(type)){
+        const client = await this.db.connect();
+        try{
+            await client.query("BEGIN");
+            if(type === "us"){
+                await client.query({
+                            text: "DELETE FROM us_sprints WHERE project=$1 AND us=$2 AND locked=0",
+                            values: [data.project, data.id]});
+                await client.query({
+                            text: 'DELETE FROM user_stories WHERE id=$1 AND project=$2',
+                            values: [data.id, data.project]});
+            }
+            if(type === "sprint"){
+                await client.query({
+                            text: 'UPDATE us_sprints SET sprint=null WHERE project=$1 AND sprint=$2 AND locked=0',
+                            values: [data.project, data.id]});
+                await client.query({
+                            text: 'DELETE FROM sprints WHERE id=$1 AND project=$2',
+                            values: [data.id, data.project]});
+            }
+            await client.query("COMMIT");
+            cb(null);
+        }catch(e){
+            await client.query("ROLLBACK");
+            cb(e);
+        }finally{
+            client.release();
         }
-        cb(null);
-    });
+    }
 }

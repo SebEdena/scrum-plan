@@ -80,10 +80,16 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('delete', (event, args) =>{
         if(args.type === "sprints"){
-            for(let us of $("#spr_"+args.data.id).find('.spr_user_story')){
-                assign_us_to_sprint($(us), -1, true, "#spr_"+args.data.id);
-            }
+            while($("#spr_"+args.data.id).find('.spr_user_story').length){}
             $("#spr_"+args.data.id).remove();
+        }
+        if(args.type === "us_sprints"){
+            $('#spr_'+args.data.sprint).data('pt_left',
+                            $('#spr_'+args.data.sprint).data('pt_left')
+                            .add(args.data.estimate));
+            $('#spr_'+args.data.sprint).find('#left')
+                    .text('Left: ' + $('#spr_'+args.data.sprint).data('pt_left'));
+            $('#usp'+args.data.id).remove();
         }
     });
 
@@ -103,12 +109,12 @@ $(document).ready(($)=>{
                 let previous_sp = $('#usp'+args.data.id).parents().closest(".pj_spr");
                 $('#usp'+args.data.id).data('estimate', parseFloat(args.data.estimate));
                 if(previous_sp.data('spr_id') !== args.data.sprint){
-                    assign_us_to_sprint($('#usp'+args.data.id), args.data.sprint, true, "#"+previous_sp.attr('id'));
+                    assign_us_to_sprint($('#usp'+args.data.id), args.data.sprint, previous_sp.data('id'));
                 } else {
                     if(args.data.sprint != null){
                         let item = $('#spr_'+args.data.sprint);
                         item.data('pt_left',
-                            new Decimal($('#spr_'+args.data.sprint).data('pt_left'))
+                            $('#spr_'+args.data.sprint).data('pt_left')
                             .minus(diff_est));
                         item.find('#left')
                             .text('Left: ' + $('#spr_'+args.data.sprint).data('pt_left'));
@@ -121,7 +127,6 @@ $(document).ready(($)=>{
             }
         }
         if(args.type === "sprints"){
-            console.log(args);
             let item = $('#spr_'+args.data.id);
             let diff_pts = Decimal.sub(args.data.points,item.data('total'));
             item.data('total', new Decimal(args.data.points));
@@ -219,7 +224,7 @@ $(document).ready(($)=>{
                 title: us.feature
             });
         }
-        assign_us_to_sprint($('#usp'+us_sp.id), us_sp.sprint, false);
+        assign_us_to_sprint($('#usp'+us_sp.id), us_sp.sprint, null);
     }
 
     /**
@@ -383,15 +388,14 @@ $(document).ready(($)=>{
      * @function assign_us_to_sprint
      * @description Assigns a user story to a sprint or to the default container
      * @param item - The html node of the user story
-     * @param sprint - The index of the target sprint
-     * @param update - True if the assignment needs a user story update
-     * @param source - The id of the source sprint
+     * @param target_sprint - The index of the target sprint
+     * @param source_sprint - The id of the source sprint
      */
-    function assign_us_to_sprint(item, sprint, update, source="#spr_us"){
-        let target = (sprint == null)?$("#spr_us"):$("#spr_"+sprint).find('.spr_us_container');
-        let new_source = (source === "#spr_us")?$(source):$(source).find('.spr_us_container');
+    function assign_us_to_sprint(item, target_sprint, source_sprint){
+        let target = (target_sprint == null)?$("#spr_us"):$("#spr_"+target_sprint).find('.spr_us_container');
+        let new_source = (source_sprint == null)?$("#spr_us"):$("#spr_"+source_sprint).find('.spr_us_container');
         $(item).detach().appendTo(target);
-        update_points(item, target, new_source, update);
+        update_points(item, target, new_source, false);
     }
 
     /**
@@ -406,7 +410,6 @@ $(document).ready(($)=>{
         if(!$(target).is($(source)) && $(target).has($(el))){
             let item = null, new_sp = null;
             if($(source).prop('id')!=="spr_us"){
-
                 item = $(source).parents().closest(".pj_spr");
                 item.data('pt_left', Decimal.add(item.data('pt_left'),
                                                 $(el).data('estimate')));

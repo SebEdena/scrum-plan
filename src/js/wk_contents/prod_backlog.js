@@ -5,9 +5,7 @@
  */
 'use strict';
 let tmp_us = []; //Array of us not validated by the database yet
-let us_update = {}; //Array of sprints containing user stories to be updated after sprint update
-// let us_sprint_update = []; //Array of user stories to be updated once removed from sprint
-let locked = {};
+let locked = {}; //Information about the user story being locked or not
 
 $(document).ready(($)=>{
     ipcRenderer.send("fetch", {type:"us_sprints"});//Asks to fetch the user_stories
@@ -84,12 +82,8 @@ $(document).ready(($)=>{
                 $('#us'+args.data.id).find("button").prop("disabled", false);
             }
         }
-        if(args.type === "sprints"){
-            // let id = 0;
-            // while(us_update[args.data.id] != null && us_update[args.data.id].length > 0){
-            //     id = us_update[args.data.id].shift();
-            //     update_us($('#us' + id), $('#us' + id).find('form')[0]);
-            // }
+        if(args.type === "us_sprints"){
+            check_us(args.data.us);
         }
     });
 
@@ -266,14 +260,16 @@ $(document).ready(($)=>{
         });
     }
 
-    function check_us(){
+    function check_us(us=null){
         let usp = remote.getGlobal('data').us_sprints;
         for(let i in usp){
             let item = usp[i];
-            if(!locked.hasOwnProperty(item.us)){
-                locked[item.us] = false;
+            if(us == null || item.us === us){
+                if(!locked.hasOwnProperty(item.us)){
+                    locked[item.us] = false;
+                }
+                locked[item.us] = locked[item.us] || item.locked;
             }
-            locked[item.us] = locked[item.us] || item.locked;
         }
     }
 
@@ -519,15 +515,10 @@ $(document).ready(($)=>{
      * @fires ipcMain:update
      */
     function sprint_update_for_overflow(us, usp, sprint){
-        // if(!us_update.hasOwnProperty(sprint.id)){
-        //     us_update[sprint.id] = [];
-        // }
-        // us_update[sprint.id].push(us.id);
         let new_points = new Decimal(sprint.points)
                               .minus(us.estimate)
                               .plus($('#us'+us.id).find('#est').val())
                               .toNumber();
-        console.log(new_points);
         let data = {
             id: usp.id,
             sprint: usp.sprint,
