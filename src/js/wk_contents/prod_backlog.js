@@ -6,7 +6,7 @@
 'use strict';
 let tmp_us = []; //Array of us not validated by the database yet
 let us_update = {}; //Array of sprints containing user stories to be updated after sprint update
-let us_sprint_update = []; //Array of user stories to be updated once removed from sprint
+// let us_sprint_update = []; //Array of user stories to be updated once removed from sprint
 let locked = {};
 
 $(document).ready(($)=>{
@@ -75,26 +75,21 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('update', (event, args) => {
         if(args.type === "user_stories"){
-            if(us_sprint_update.indexOf(args.data.id) >= 0){
-                us_sprint_update.splice(us_sprint_update.indexOf(args.data.id), 1);
-                update_us($('#us' + args.data.id), $('#us' + args.data.id).find('form')[0]);
-            }else{
-                $("#us"+args.data.id).find('#feat').val(args.data.feature);
-                $("#us"+args.data.id).find('#desc').val(args.data.logs);
-                $("#us"+args.data.id).find('#est').val(adjust_display(args.data.estimate));
-            }
-            if(locked(args.data.id)){
+            $("#us"+args.data.id).find('#feat').val(args.data.feature);
+            $("#us"+args.data.id).find('#desc').val(args.data.logs);
+            $("#us"+args.data.id).find('#est').val(adjust_display(args.data.estimate));
+            if(locked[args.data.id]){
                 $('#us'+args.data.id).find("button:not(#del)").prop("disabled", false);
             }else{
                 $('#us'+args.data.id).find("button").prop("disabled", false);
             }
         }
         if(args.type === "sprints"){
-            let id = 0;
-            while(us_update[args.data.id] != null && us_update[args.data.id].length > 0){
-                id = us_update[args.data.id].shift();
-                update_us($('#us' + id), $('#us' + id).find('form')[0]);
-            }
+            // let id = 0;
+            // while(us_update[args.data.id] != null && us_update[args.data.id].length > 0){
+            //     id = us_update[args.data.id].shift();
+            //     update_us($('#us' + id), $('#us' + id).find('form')[0]);
+            // }
         }
     });
 
@@ -108,6 +103,7 @@ $(document).ready(($)=>{
     ipcRenderer.on('delete', (event, args) => {
         if(args.type === "user_stories"){
             $('#us' + args.data.id).remove();
+            delete locked[args.data.id];
         }
     });
 
@@ -120,7 +116,11 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('insert', (event, args) =>{
         if(args.type === "user_stories" && $('#us'+args.data.id).length === 0){
-            fill_us(args.data, args.data.locked);
+            locked[args.data.id] = false;
+            fill_us(args.data, false);
+        }
+        if(args.type === "us_sprints"){
+            locked[args.data.us] = locked[args.data.us] || !!args.data.locked;
         }
     });
 
@@ -133,14 +133,7 @@ $(document).ready(($)=>{
      */
     ipcRenderer.on('error', (event, args) => {
         if(args.type === "us"){
-            // let msg = 'The US #' + args.data.id+ ' : \"' + args.data.feature;
-            // switch(args.action){
-            //     case 'update' : message += "\" could not be updated."; break;
-            //     case 'delete' : message += "\" could not be deleted."; break;
-            //     default : break;
-            // }
-            // dialog.showMessageBox({title: "Scrum Assistant", type: 'error', buttons: ['Ok'],
-            // message: msg}, ()=>{});
+            revert_us_points(remote.getGlobal('data').user_stories[args.data.id]);
             $('#us'+args.data.id).find("button").prop("disabled", false);
         }
     });
@@ -205,7 +198,7 @@ $(document).ready(($)=>{
      * @description Fills a user story
      * @param us - The data of the user story
      */
-    function fill_us(us, locked){
+    function fill_us(us, lock){
         let html = `
             <div class="container user_story rounded" id="us${us.id}">
                 <div class="d-flex justify-content-between align-items-end">
@@ -213,7 +206,7 @@ $(document).ready(($)=>{
                     <div>
                         <span class="btn-group">
                             <button type="button" id="ok" class="btn btn-secondary">Edit</button>
-                            <button type="button" id="del" class="btn btn-danger" ${locked?"disabled":""}>Delete</button>
+                            <button type="button" id="del" class="btn btn-danger" ${lock?"disabled":""}>Delete</button>
                         </span>
                     </div>
                 </div>
@@ -279,8 +272,6 @@ $(document).ready(($)=>{
             let item = usp[i];
             if(!locked.hasOwnProperty(item.us)){
                 locked[item.us] = false;
-            }else{
-                if(locked[item.us]) continue;
             }
             locked[item.us] = locked[item.us] || item.locked;
         }
@@ -332,10 +323,11 @@ $(document).ready(($)=>{
             submitHandler: (form) => {
                 item.find('#ok').text('Edit').removeClass("btn-success").addClass("btn-secondary");
                 item.find("input, textarea, button").prop("disabled", true);
-                if(verify_update_ok(item)){
+                let res = verify_update_ok(item);
+                if(res.update_ok){
                     update_us(item, form);
                 }else{
-                    us_est_overflow_resolve(item);
+                    us_est_overflow_resolve(item, res.us_sprint);
                 }
             },
             errorElement: "div"
@@ -426,7 +418,6 @@ $(document).ready(($)=>{
                 }else{
                     ipcRenderer.send('delete', {type: "us", data: {id:item.data('id'),
                     feature: item.find('#feat').val()
-                    // , project: project_id
                     }});
                 }
             }else{
@@ -444,22 +435,37 @@ $(document).ready(($)=>{
      * @description Checks if the update of a user story is valid, to prevent
        edge case with sprint points
      * @param item - The user story to be checked
-     * @returns {boolean} True if it is ok to update the user story
+     * @returns {Object} The boolean result and the us_sprint object to update
      */
     function verify_update_ok(item){
-        let current_us = remote.getGlobal('data').user_stories[item.data('id')];
-        let us = remote.getGlobal('data').user_stories;
-        if(current_us.sprint === -1){
-            return true;
-        }
-        let sprint = remote.getGlobal('data').sprints[current_us.sprint];
-        let diff = new Decimal(sprint.points).minus(item.find('#est').val());
-        for(let i in us){
-            if(us[i].sprint === sprint.id && us[i].id !== current_us.id){
-                diff = diff.minus(us[i].estimate);
+        let current_us = item.data('id');
+        let usp = remote.getGlobal('data').us_sprints;
+        let sprints = remote.getGlobal('data').sprints;
+        let sps = {};
+        Object.keys(sprints).forEach((key)=>{
+            sps[key] = new Decimal(sprints[key].points);
+        });
+        let sp = -1, us_sp = -1;
+        for(let i in usp){
+            let it = usp[i];
+            if(it.sprint != null && sps[it.sprint] != null && (sp === -1 || it.sprint === sp)){
+                if(it.us === current_us){
+                    if(it.locked === 1){
+                        sps[it.sprint] = null;
+                    }else{
+                        sps[it.sprint] = sps[it.sprint].minus(item.find('#est').val());
+                        sp = it.sprint;
+                        us_sp = it.id;
+                    }
+                }else{
+                    sps[it.sprint] = sps[it.sprint].minus(it.estimate);
+                }
             }
         }
-        return diff.toNumber() >= 0;
+        return {
+            update_ok: (sp >= 0)?sps[sp].isPositive():true,
+            us_sprint: us_sp
+        }
     }
 
     /**
@@ -474,7 +480,6 @@ $(document).ready(($)=>{
             feature: form.feature.value,
             logs: form.description.value,
             estimate: parseFloat(form.estimate.value.replace(",", ".")).toFixed(2),
-            // project: project_id,
             id: item.data('id')
         };
         ipcRenderer.send("update", {type: "us", data: data});
@@ -484,10 +489,12 @@ $(document).ready(($)=>{
      * @function us_est_overflow_resolve
      * @description Asks the user how to resolve a edge case update of a user story
      * @param item - The html node of the user story to updated
+     * @param us_sp - The us_sprint object associated to the problem
      */
-    function us_est_overflow_resolve(item){
+    function us_est_overflow_resolve(item, us_sp){
         let us = remote.getGlobal('data').user_stories[item.data('id')];
-        let sprint = remote.getGlobal('data').sprints[us.sprint];
+        let usp = remote.getGlobal('data').us_sprints[us_sp];
+        let sprint = remote.getGlobal('data').sprints[usp.sprint];
         dialog.showMessageBox(remote.getCurrentWindow(),
             {title: "Scrum Assistant",
             type: 'info',
@@ -497,8 +504,8 @@ $(document).ready(($)=>{
             (resp)=>{
                 switch (resp) {
                     case 0: revert_us_points(us); break;
-                    case 1: remove_us_sprint(us, sprint); break;
-                    case 2: sprint_update_for_overflow(us, sprint); break;
+                    case 1: remove_us_sprint(us, usp); break;
+                    case 2: sprint_update_for_overflow(us, usp, sprint); break;
                     default: break;
                 }
             });
@@ -511,21 +518,26 @@ $(document).ready(($)=>{
      * @param sprint - The data of the sprint
      * @fires ipcMain:update
      */
-    function sprint_update_for_overflow(us, sprint){
-        if(!us_update.hasOwnProperty(sprint.id)){
-            us_update[sprint.id] = [];
-        }
-        us_update[sprint.id].push(us.id);
+    function sprint_update_for_overflow(us, usp, sprint){
+        // if(!us_update.hasOwnProperty(sprint.id)){
+        //     us_update[sprint.id] = [];
+        // }
+        // us_update[sprint.id].push(us.id);
         let new_points = new Decimal(sprint.points)
                               .minus(us.estimate)
                               .plus($('#us'+us.id).find('#est').val())
                               .toNumber();
+        console.log(new_points);
         let data = {
-            id: sprint.id,
-            // project: project_id,
-            points: new_points
+            id: usp.id,
+            sprint: usp.sprint,
+            us: us.id,
+            sp_points: new_points,
+            feature: us.feature,
+            logs: us.logs,
+            estimate: $('#us'+us.id).find('#est').val()
         };
-        ipcRenderer.send('update', {type: "sprint", data: data});
+        ipcRenderer.send('update', {type: "usp_update_overflow", data: data});
     }
 
     /**
@@ -535,8 +547,6 @@ $(document).ready(($)=>{
      */
     function revert_us_points(us){
         $('#us'+us.id).find('#est').val(parseFloat(us.estimate));
-        $('#us'+us.id).find("button").prop("disabled", false);
-
         $('#us'+us.id).find('#ok').text('Ok');
         $('#us'+us.id).find('#del').text('Cancel');
         $('#us'+us.id).find('#ok').removeClass('btn-secondary').addClass('btn-success');
@@ -551,13 +561,14 @@ $(document).ready(($)=>{
      * @param sprint - The data of the sprint
      * @fires ipcMain:update
      */
-    function remove_us_sprint(us, sprint){
-        us_sprint_update.push(us.id);
-        ipcRenderer.send("update", {type:"us_sprint",
+    function remove_us_sprint(us, usp){
+        ipcRenderer.send("update", {type:"usp_remove_overflow",
             data: {
-                id:us.id,
-                // project:project_id,
-                sprint:-1
+                id: usp.id,
+                us: us.id,
+                feature: us.feature,
+                logs: us.logs,
+                estimate: $('#us'+us.id).find('#est').val()
             }
         });
     }

@@ -62,13 +62,11 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on('insert', (event, args) =>{
-        console.log(args);
         if(args.type === "sprints" && $("#spr_"+args.data.id).length === 0){
             fill_sprint(args.data);
             $("#spr_"+args.data.id).find('#spr_total_edit').trigger('click');
         }
-        if(args.type === "us_sprints" && $("#spr_us"+args.data.us).length === 0){
-            console.log("there");
+        if(args.type === "us_sprints" && $("#usp"+args.data.us).length === 0){
             fill_sprint_us(args.data, remote.getGlobal("data").user_stories[args.data.us]);
         }
     });
@@ -97,22 +95,21 @@ $(document).ready(($)=>{
      * @param args - Parameters of the event
      */
     ipcRenderer.on('update', (event, args)=>{
-        if(args.type === "user_stories"){
-            if($('#spr_us'+args.data.id).length === 0){
-                fill_sprint_us(args.data);
+        if(args.type === "us_sprints"){
+            if($('#usp'+args.data.id).length === 0){
+                fill_sprint_us(args.data, remote.getGlobal('data').user_stories[args.data.us]);
             }else{
-                let diff_est = Decimal.sub(args.data.estimate,$('#spr_us'+args.data.id).data('estimate'));
-                let previous_sp = $('#spr_us'+args.data.id).parents().closest(".pj_spr");
-                $('#spr_us'+args.data.id).data('estimate', parseFloat(args.data.estimate));
+                let diff_est = Decimal.sub(args.data.estimate,$('#usp'+args.data.id).data('estimate'));
+                let previous_sp = $('#usp'+args.data.id).parents().closest(".pj_spr");
+                $('#usp'+args.data.id).data('estimate', parseFloat(args.data.estimate));
                 if(previous_sp.data('spr_id') !== args.data.sprint){
-                    assign_us_to_sprint($('#spr_us'+args.data.id), args.data.sprint, true, "#"+previous_sp.attr('id'));
+                    assign_us_to_sprint($('#usp'+args.data.id), args.data.sprint, true, "#"+previous_sp.attr('id'));
                 } else {
-                    if(args.data.sprint !== -1){
+                    if(args.data.sprint != null){
                         let item = $('#spr_'+args.data.sprint);
                         item.data('pt_left',
                             new Decimal($('#spr_'+args.data.sprint).data('pt_left'))
-                            .minus(diff_est)
-                            .toNumber());
+                            .minus(diff_est));
                         item.find('#left')
                             .text('Left: ' + $('#spr_'+args.data.sprint).data('pt_left'));
                         item.find('#total_pts').attr('min', Decimal.sub(item.data('total'),
@@ -120,14 +117,11 @@ $(document).ready(($)=>{
                                                                         .toNumber());
                     }
                 }
-                $('#spr_us'+args.data.id).html(`<p>US#${args.data.id} <small class="text-muted">Estimated: ${parseFloat(args.data.estimate)}</small></p>`);
-                $('#spr_us' + args.data.id).tooltip('dispose').tooltip({
-                    placement: 'top',
-                    title: args.data.feature
-                });
+                $('#usp'+args.data.id).html(`<p>US#${args.data.us} <small class="text-muted">Estimated: ${parseFloat(args.data.estimate)}</small></p>`);
             }
         }
         if(args.type === "sprints"){
+            console.log(args);
             let item = $('#spr_'+args.data.id);
             let diff_pts = Decimal.sub(args.data.points,item.data('total'));
             item.data('total', new Decimal(args.data.points));
@@ -138,6 +132,12 @@ $(document).ready(($)=>{
                                                             .toNumber());
             item.find('#left').text('Left: ' + item.data('pt_left').toNumber());
             item.find('#spr_total_edit').text('Edit').prop("disabled", false);
+        }
+        if(args.type === "user_stories"){
+            $('.spr_us' + args.data.id).tooltip('dispose').tooltip({
+                placement: 'top',
+                title: args.data.feature
+            });
         }
     });
 
@@ -180,7 +180,6 @@ $(document).ready(($)=>{
         let items = $(".pj_spr:not(#spr_us)");
         if(items.length !== 0){
             ipcRenderer.send('delete', {type: "sprint", data:{
-                // project:project_id,
                 id:items.last().data("spr_id")}});
         }
     });
@@ -206,20 +205,21 @@ $(document).ready(($)=>{
      * @param us - The data of the user story
      */
     function fill_sprint_us(us_sp, us){
-        let html = `<div class="col-xl-6 spr_user_story ${us_sp.locked===1?"locked":""} d-flex flex-row justify-content-around rounded" id="spr_us${us_sp.id}">
+        let html = `<div class="col-xl-6 spr_user_story spr_us${us_sp.us} ${us_sp.locked===1?"locked":""} d-flex flex-row justify-content-around rounded" id="usp${us_sp.id}">
                         <p>US#${us_sp.us} <small class="text-muted">Estimated: ${parseFloat(us_sp.estimate)}</small></p>
                     </div>`;
         $("#spr_us").append($(html));
-        $('#spr_us' + us_sp.id).data('us', us_sp.us);
-        $('#spr_us' + us_sp.id).data('id', us_sp.id);
-        $('#spr_us' + us_sp.id).data('estimate', new Decimal(us_sp.estimate));
+        $('#usp' + us_sp.id).data('us', us_sp.us);
+        $('#usp' + us_sp.id).data('id', us_sp.id);
+        $('#usp' + us_sp.id).data('estimate', new Decimal(us_sp.estimate));
+        $('#usp' + us_sp.id).data('locked', !!us_sp.locked);
         if(us){
-            $('#spr_us' + us_sp.id).tooltip({
+            $('.spr_us' + us_sp.us).tooltip({
                 placement: 'top',
                 title: us.feature
             });
         }
-        assign_us_to_sprint($('#spr_us'+us_sp.id), us_sp.sprint, false);
+        assign_us_to_sprint($('#usp'+us_sp.id), us_sp.sprint, false);
     }
 
     /**
@@ -426,10 +426,9 @@ $(document).ready(($)=>{
                                                         .toNumber());
             }
             if(update){
-                ipcRenderer.send("update", {type:"us_sprint",
+                ipcRenderer.send("update", {type:"usp_move",
                 data: {
                     id:$(el).data('id'),
-                    // project:project_id,
                     sprint:new_sp
                 }});
             }

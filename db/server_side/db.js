@@ -189,26 +189,65 @@ DBSocketLinker.prototype._transacCreate = async function(type, data, cb){
 DBSocketLinker.prototype.send_update = function(args, cb){
     let query = null, column = null;
     switch(args.type){
-        case 'us': query = { name: 'update-us',
-                             text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
-                             values: [args.data.feature, args.data.logs, args.data.estimate, args.data.id, args.data.project]
-                         }; column="user_stories"; break;
-        case 'us_sprint': query = { name: 'update-us-sprint',
-                                    text: 'UPDATE user_stories SET sprint=$1 WHERE id=$2 AND project=$3',
+        case 'us': this._transacUpdate(args.type, args.data, cb); break;
+        case 'usp_move': this._classicQuery({
+                                    text: 'UPDATE us_sprints SET sprint=$1 WHERE id=$2 AND project=$3 AND locked=0',
                                     values: [args.data.sprint, args.data.id, args.data.project]
-                                }; column="user_stories"; break;
-        case 'sprint': query = { name: 'update-sprint',
+                                }, false, cb); break;
+        case 'usp_remove_overflow': this._transacUpdate(args.type, args.data, cb); break;
+        case 'usp_update_overflow': this._transacUpdate(args.type, args.data, cb); break;
+        case 'sprint': this._classicQuery({
                                  text: 'UPDATE sprints SET points=$1 WHERE id=$2 AND project=$3',
                                  values: [args.data.points, args.data.id, args.data.project]
-                             }; column="sprints"; break;
-        default: break;
+                             }, false, cb); break;
+        default: cb(new Error("Invalid Data Type")); break;
     }
-    this.db.query(query, (err, res) => {
-        if(err){
-            cb(err);
+}
+
+DBSocketLinker.prototype._transacUpdate = async function(type, data, cb){
+    if(['us', 'usp_remove_overflow', 'usp_update_overflow'].includes(type)){
+        const client = await this.db.connect();
+        try{
+            await client.query("BEGIN");
+            if(type === "us"){
+                await client.query({
+                            text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
+                            values: [data.feature, data.logs, data.estimate, data.id, data.project]});
+                await client.query({
+                            text: "UPDATE us_sprints SET estimate=$1 WHERE project=$2 AND us=$3 AND locked=0",
+                            values: [data.estimate, data.project, data.id]});
+            }
+            if(type === "usp_remove_overflow"){
+                await client.query({
+                            text: 'UPDATE us_sprints SET sprint=null WHERE id=$1 AND project=$2 AND locked=0',
+                            values: [data.id, data.project]});
+                await client.query({
+                            text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
+                            values: [data.feature, data.logs, data.estimate, data.us, data.project]});
+                await client.query({
+                            text: 'UPDATE us_sprints SET estimate=$1 WHERE id=$2 AND project=$3 AND locked=0',
+                            values: [data.estimate, data.id, data.project]});
+            }
+            if(type === "usp_update_overflow"){
+                await client.query({
+                            text: 'UPDATE sprints SET points=$1 WHERE id=$2 AND project=$3',
+                            values: [data.sp_points, data.sprint, data.project]});
+                await client.query({
+                            text: 'UPDATE user_stories SET (feature, logs, estimate) = ($1,$2,$3) WHERE id=$4 AND project=$5',
+                            values: [data.feature, data.logs, data.estimate, data.us, data.project]});
+                await client.query({
+                            text: "UPDATE us_sprints SET estimate=$1 WHERE project=$2 AND id=$3 AND sprint=$4 AND locked=0",
+                            values: [data.estimate, data.project, data.id, data.sprint]});
+            }
+            await client.query("COMMIT");
+            cb(null);
+        }catch(e){
+            await client.query("ROLLBACK");
+            cb(e);
+        }finally{
+            client.release();
         }
-        cb(null);
-    });
+    }
 }
 
 /**
