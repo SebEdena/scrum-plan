@@ -135,8 +135,10 @@ $(document).ready(($)=>{
                                    .attr('min', Decimal.sub(item.data('total'),
                                                             item.data('pt_left'))
                                                             .toNumber());
+            item.data('status', args.data.status);
             item.find('#left').text('Left: ' + item.data('pt_left').toNumber());
             item.find('#spr_total_edit').text('Edit').prop("disabled", false);
+            item.find('#actions').prop("disabled", false);
         }
         if(args.type === "user_stories"){
             $('.spr_us' + args.data.id).tooltip('dispose').tooltip({
@@ -182,10 +184,24 @@ $(document).ready(($)=>{
      * @listens #delete_sp:resize
      */
     $('#delete_sp').on('click', ()=>{
-        let items = $(".pj_spr:not(#spr_us)");
-        if(items.length !== 0){
-            ipcRenderer.send('delete', {type: "sprint", data:{
-                id:items.last().data("spr_id")}});
+        if(can_delete_sprint()){
+            dialog.showMessageBox({title: "Scrum Assistant",
+                type: 'info',
+                buttons: ['No', 'Yes'],
+                message: "Do you really want to delete the last sprint ?",
+                defaultId: 0},
+                (resp)=>{
+                    if(resp === 1){
+                        ipcRenderer.send('delete', {type: "sprint", data:{
+                            id:$(".pj_spr:not(#spr_us)").last().data("spr_id")}});
+                    }
+                });
+        }else{
+            dialog.showMessageBox({title: "Scrum Assistant",
+                type: 'error',
+                buttons: ['Ok'],
+                message: "Unable to delete the last sprint."},
+                (resp)=>{});
         }
     });
 
@@ -255,15 +271,18 @@ $(document).ready(($)=>{
                             </a>
                         </h3>
                         <h3 class="m-0 col-xl-3" id="left"></h3>
-                        <form class="form-inline m-0 col-xl-6 d-flex justify-content-center">
-                            <!-- <label for="total_pts">Total sprint points</label> -->
-                            <div class="form-group input-group m-0 col-lg-6">
-                                <!-- <div class="input-group-addon">Points</div> -->
+                        <form class="form-inline m-0 col-xl-6">
+                            <div class="input-group-sm">
                                 <input type="number" class="form-control form-control-sm rounded" id="total_pts" name="points" placeholder="Total points" min="0" value="${parseFloat(sprint.points)}" required disabled>
                             </div>
-                            <div class="col-lg-6 row p-0 btn-group">
-                                <button type="button" class="btn btn-success col-sm-5" id='spr_total_edit'>Edit</button>
-                                <button type="button" class="btn btn-danger col-sm-7" id='spr_total_cancel' disabled>Cancel</button>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Actions
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="actions">
+                                    <button type="button" class='dropdown-item' id='spr_total_edit'>Edit</button>
+                                    <button type="button" class='dropdown-item' id='spr_total_cancel' disabled>Cancel</button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -279,6 +298,7 @@ $(document).ready(($)=>{
         $('#spr_'+sprint.id).data('spr_id', sprint.id)
                             .data('total', new Decimal(sprint.points))
                             .data('pt_left', new Decimal(sprint.points))
+                            .data('status', sprint.current)
                             .find('#left').text('Left: ' + parseFloat(sprint.points));
 
         $('#spr_'+sprint.id).find('#total_pts').tooltip({
@@ -361,7 +381,8 @@ $(document).ready(($)=>{
                 return Decimal.sub(item.data('pt_left'), $(el).data('estimate')).isPositive();
             },
             moves: function (el, source, handle, sibling) {
-                return $(el).hasClass('spr_user_story');
+                return $(el).hasClass('spr_user_story') &&
+                    $(source).parents().closest(".pj_spr").data('status') < 0;
             },
             invalid: function (el, handle) {
                 return $(el).hasClass('locked');
@@ -435,6 +456,17 @@ $(document).ready(($)=>{
                     sprint:new_sp
                 }});
             }
+        }
+    }
+
+    function can_delete_sprint(){
+        let items = $(".pj_spr:not(#spr_us)");
+        if(!items.length){
+            return false;
+        }else{
+            return !($.grep(items.last().find('.spr_user_story'), (n, i)=>{
+                return $(n).data('locked');
+            }).length);
         }
     }
 });
