@@ -12,7 +12,7 @@ let showModalId = ''; //Id of the modal being shown
  * @description Shows a modal on GUI
  * @param elementId - The id of the html modal
  */
-function showModal(elementId) {
+function showModal(elementId, data=null) {
     if (hideInProgress) {
         showModalId = elementId;
     } else {

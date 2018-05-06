@@ -8,8 +8,50 @@ let drake = null; //The drag and drop system
 let window_height = 0; //The height of the window
 
 $(document).ready(($)=>{
+    $.datetimepicker.setDateFormatter('moment');
+    $.validator.addMethod("valid_date", (value, element)=>{
+        return moment(value, 'DD/MM/Y HH:mm').isValid();
+    }, 'This date is invalid');
+    $.validator.addMethod("valid_interval", (value, element)=>{
+        return moment(value, 'DD/MM/Y HH:mm').isSameOrBefore(moment($("#dtp_end").val(), 'DD/MM/Y HH:mm'));
+    }, 'The interval is invalid');
+
     $("#spr_us").data('spr_id', -1);
     window_height = $(window).height(); //Gets the height of the window
+
+    $('#dtp_start').datetimepicker({
+        format: "DD/MM/Y HH:mm",
+        formatDate: "DD/MM/Y",
+        formatTime: "HH:mm",
+        step: 15,
+        onShow: function(ct){
+            this.setOptions({
+                maxDate: $('#dtp_end').val()?$('#dtp_end').val().split(' ')[0]:false,
+                maxTime: $('#dtp_end').val()?$('#dtp_end').val().split(' ')[1]:false
+            });
+        }
+    });
+
+    $('#dtp_end').datetimepicker({
+        format: "DD/MM/Y HH:mm",
+        formatDate: "DD/MM/Y",
+        formatTime: "HH:mm",
+        step: 15,
+        onShow: function(ct){
+            this.setOptions({
+                minDate: $('#dtp_start').val()?$('#dtp_start').val().split(' ')[0]:false,
+                minTime: $('#dtp_start').val()?$('#dtp_start').val().split(' ')[1]:false
+            });
+        }
+    });
+
+    $("#modal_start_sprint").on('hidden.bs.modal', ()=>{
+        $("#modal_start_sprint").find('.dtp').datetimepicker('reset');
+        $('#dtp_start').datetimepicker('setOptions', {maxDate: false, maxTime: false});
+        $('#dtp_end').datetimepicker('setOptions', {minDate: false, minTime: false});
+        $("#modal_start_sprint").find('#ck_import_sp').prop('checked', false);
+        $("#modal_start_sprint").find('form').validate().destroy();
+    });
 
     ipcRenderer.send("fetch", {type:"user_stories"});//Asks to fetch the user_stories
 
@@ -269,6 +311,7 @@ $(document).ready(($)=>{
                             <a data-toggle="collapse" href="#c${sprint.id}" aria-expanded="true" aria-controls="c${sprint.id}">
                                 Sprint #${sprint.id}
                             </a>
+                            ${sprint.current>=0?`<span class="badge badge-secondary">Current</span>`:""}
                         </h3>
                         <h3 class="m-0 col-xl-3" id="left"></h3>
                         <form class="form-inline m-0 col-xl-6">
@@ -282,6 +325,7 @@ $(document).ready(($)=>{
                                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="actions">
                                     <button type="button" class='dropdown-item' id='spr_total_edit'>Edit</button>
                                     <button type="button" class='dropdown-item' id='spr_total_cancel' disabled>Cancel</button>
+                                    <button type="button" class='dropdown-item' id='spr_start' ${sprint.current>=0?"disabled":""}>Start Sprint</button>
                                 </div>
                             </div>
                         </form>
@@ -308,6 +352,7 @@ $(document).ready(($)=>{
 
         $('#spr_'+sprint.id).find('#spr_total_edit').on('click', ()=>{handle_edit($('#spr_'+sprint.id))});
         $('#spr_'+sprint.id).find('#spr_total_cancel').on('click', ()=>{handle_cancel($('#spr_'+sprint.id))});
+        $('#spr_'+sprint.id).find('#spr_start').on('click', ()=>{handle_start($('#spr_'+sprint.id))});
         drake.containers.push($('#spr_'+sprint.id).find('.spr_us_container')[0]);
     }
 
@@ -363,6 +408,35 @@ $(document).ready(($)=>{
                                             title: "Total sprint points"
                                         })
                                         .prop("disabled", true);
+    }
+
+    function handle_start(item){
+        $("#modal_start_sprint").find('h4').text("Start Sprint #" + item.data('spr_id'));
+        $('#modal_start_sprint').find('form').validate({
+            rules: {
+                date_start: {
+                    valid_date: true,
+                    valid_interval: true
+                },
+                date_end: {
+                    valid_date: true
+                }
+            },
+            submitHandler: (form)=>{
+                let data = {
+                    id: item.data('spr_id'),
+                    start: moment(form.date_start.value, 'DD/MM/Y HH:mm').toDate(),
+                    end: moment(form.date_end.value, 'DD/MM/Y HH:mm').toDate(),
+                    import_old: $("#ck_import_sp").is(":checked")
+                };
+                $("#modal_start_sprint").modal('hide');
+                console.log(data);
+                // ipcRenderer.send('update', {type: "sprint", data: data});
+
+            },
+            errorElement: "div"
+        });
+        $('#modal_start_sprint').modal('show');
     }
 
     /**

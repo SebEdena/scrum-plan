@@ -7,11 +7,14 @@
     <link href="../../node_modules/dragula/dist/dragula.min.css" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="../css/workspace.css">
     <link type="text/css" rel="stylesheet" href="../css/global.css">
-    <script type="text/javascript" src="../js/bundle.js"></script>
+    <!-- <script type="text/javascript" src="../js/bundle.js"></script> -->
     <script>
         global.jQuery = global.$ = require('jquery');
         global.Popper = require('popper.js');
+        global.moment = require('moment');
         require('jquery-validation');
+        require('jquery-mousewheel')($);
+        require('jquery-datetimepicker');
         const {Decimal} = require('decimal.js');
     </script>
     <script type="text/javascript" src="../../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>

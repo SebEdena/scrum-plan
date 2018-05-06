@@ -13,7 +13,9 @@
     "decimal.js": "^10.0.0",
     "dragula": "^3.7.2",
     "jquery": "^3.2.1",
+    "jquery-datetimepicker": "^2.5.20",
     "jquery-validation": "^1.17.0",
+    "moment": "^2.22.1",
     "photon": "git+https://github.com/connors/photon.git",
     "popper.js": "^1.12.6",
     "socket.io": "^2.0.4"
