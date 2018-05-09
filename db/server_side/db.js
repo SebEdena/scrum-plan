@@ -91,25 +91,30 @@ DBSocketLinker.prototype.load = function(type, data, cb){
     let query = null;
     switch (type) {
         case "projects": query = {
-                            name: 'fetch-projects',
                             text: 'SELECT * FROM projects p ORDER BY p.id'
                          };
                          break;
         case "user_stories": query = {
-                                    name: 'fetch-all-user-stories',
                                     text: 'SELECT us.* FROM user_stories us WHERE us.project=$1 ORDER BY us.id',
                                     values: [data.project]
                              };
                              break;
         case "sprints": query = {
-                            name: 'fetch-all-sprints',
                             text: 'SELECT sp.* FROM sprints sp WHERE sp.project=$1 ORDER BY sp.id',
                             values: [data.project]
                         };
                         break;
         case "us_sprints": query = {
-                            name: 'fetch-all-us-sprints',
                             text: 'SELECT usp.* FROM us_sprints usp WHERE usp.project=$1 ORDER BY usp.id',
+                            values: [data.project]
+                        };
+                        break;
+        case "post_its": query = {
+                            text: 'SELECT p.* FROM post_its p WHERE p.project=$1 ORDER BY p.sprint, p.usp, p.id',
+                            values: [data.project]
+                        };
+        case "dailys": query = {
+                            text: 'SELECT d.* FROM dailys d WHERE d.project=$1 ORDER BY d.sprint, d.daily_date, d.usp',
                             values: [data.project]
                         };
                         break;

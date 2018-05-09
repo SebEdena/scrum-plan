@@ -25,7 +25,9 @@ global.data = {
     current: null,
     user_stories: {},
     sprints: {},
-    us_sprints: {}
+    us_sprints: {},
+    post_its: {},
+    dailys: {}
 };
 
 /**
@@ -34,7 +36,10 @@ global.data = {
 global.loaded = {
     projects: false,
     user_stories: false,
-    sprints: false
+    sprints: false,
+    us_sprints: false,
+    post_its: false,
+    dailys: false
 };
 
 /**
@@ -46,8 +51,8 @@ global.loaded = {
  */
 app.on("ready", function(){
     mainWindow = new BrowserWindow({
-        width: 900,
-        height: 700,
+        width: 1200,
+        height: 800,
         title: "Scrum Assistant",
         show: false,
         icon: __dirname + "/scrum.ico",

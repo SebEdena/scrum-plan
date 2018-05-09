@@ -1,0 +1,53 @@
+.wh_post_it{
+    display: flex !important;
+}
+
+.wh_us_pi {
+    background-color: rgb(135, 206, 250);
+    background-clip: padding-box;
+    border: 4px solid transparent;
+    -webkit-transition: background-color 0.5s;
+}
+
+.wh_us_pi:hover {
+    background-color: rgb(105, 176, 220);
+}
+
+.wh_st_pi {
+    background-color: rgb(252, 251, 124);
+    background-clip: padding-box;
+    border: 4px solid transparent;
+    -webkit-transition: background-color 0.5s;
+}
+
+.wh_st_pi:hover {
+    background-color: rgb(222, 221, 94);
+}
+
+.wh_pb_pi {
+    background-color: rgb(255, 112, 224);
+    background-clip: padding-box;
+    border: 4px solid transparent;
+    -webkit-transition: background-color 0.5s;
+}
+
+.wh_pb_pi:hover {
+    background-color: rgb(225, 82, 194);
+}
+
+.wh_tooltip_logs {
+    text-align: justify;
+    text-justify: inter-character;
+}
+
+@media screen and (max-width: 1300px){
+    .h-content div{
+        font-size: 0.8rem;
+    }
+}
+
+@media screen and (min-width: 1700px){
+    .h-content div{
+        font-size: 1.2rem;
+    }
+}

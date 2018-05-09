@@ -1,0 +1,96 @@
+<div class='content-page container-fluid' id='whiteboard'>
+    <h1>Whiteboard</h1>
+    <div>
+        <div>
+            <button id="wh_add_pi" class="btn btn-success">Add Post-it</button>
+            <select id="wh_select_sprint" class="form-control-sm"></select>
+            <button id="wh_current" class="btn btn-secondary">Current</button>
+            <button id="wh_dailys" class="btn btn-secondary">Dailys</button>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <h3>Sprint#2<small class="ml-3">01/02/2018 10:10 - 15/02/2018 10:10</small></h3>
+        <div class='row'>
+            <table class="table table-bordered" id="wh_table">
+                <thead>
+                    <tr>
+                        <th scope="col">To Do</th>
+                        <th scope="col">Doing</th>
+                        <th scope="col">Testing</th>
+                        <th scope="col">Done</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="wh_todo" class="d-flex flex-row flex-wrap">
+                            <div class="wh_post_it wh_us_pi col-12 col-md-4 col-xs-3 h d-flex">
+                                <div class="h-content text-center d-flex flex-wrap flex-column justify-content-center">
+                                    <div>US1</div>
+                                    <div>ST1</div>
+                                </div>
+                            </div>
+                            <div class="wh_post_it wh_st_pi col-12 col-md-4 col-xs-3 h">
+                                <div class="h-content text-center d-flex flex-wrap flex-column justify-content-center">
+                                    <div>US1</div>
+                                    <div>ST1</div>
+                                </div>
+                            </div>
+                            <div class="wh_post_it wh_pb_pi col-12 col-md-4 col-xs-3 h">
+                                <div class="h-content text-center d-flex flex-wrap flex-column justify-content-center">
+                                    <div>US1</div>
+                                    <div>ST1</div>
+                                </div>
+                            </div>
+                                <div class="wh_post_it wh_us_pi col-12 col-md-4 col-xs-3 h d-flex">
+                                    <div class="h-content text-center d-flex flex-wrap flex-column justify-content-center">
+                                        <div>US1</div>
+                                        <div>ST1</div>
+                                    </div>
+                                </div>
+                        </td>
+                        <td id="wh_doing"></td>
+                        <td id="wh_testing"></td>
+                        <td id="wh_done"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- <div class="modal fade" id="modal_start_sprint" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title"></h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid" id="html_start_sprint">
+                        <form id="start_sprint">
+                            <div class="form-group row">
+                                <label class="m-2" for="dtp_start">Start date</label>
+                                <input class="dtp" type="text" id="dtp_start" name="date_start" required readonly/>
+                            </div>
+                            <div class="form-group row">
+                                <label class="m-2" for="dtp_end">End date</label>
+                                <input class="dtp" type="text" id="dtp_end" name="date_end" required readonly/>
+                            </div>
+                            <div class="form-group">
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" name="ck_import_sp" id="ck_import_sp">
+                                    <label class="custom-control-label" for="ck_import_sp">Import older post-its</label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button id="send_start_sp" type="submit" class="btn btn-success">Start</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+    <script type="text/javascript" src="../js/wk_contents/whiteboard.js"></script>
+    <link type="text/css" rel="stylesheet" href="../css/wk_contents/whiteboard.css">
+</div>

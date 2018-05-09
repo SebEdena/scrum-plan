@@ -118,14 +118,33 @@ function load(type){
  * @see socket:loaded
  */
 function loaded(args, cb){
-    for(let obj of args.data){
-        global.data[args.type][obj.id] = obj;
-    }
-    if(!global.loaded[args.type]){
-        global.loaded[args.type] = true;
-        cb(true);
+    if(['user_stories', 'projects', 'sprints', 'us_sprints'].includes(args.type)){
+        for(let obj of args.data){
+            global.data[args.type][obj.id] = obj;
+        }
+        if(!global.loaded[args.type]){
+            global.loaded[args.type] = true;
+            cb(true);
+        }else{
+            cb(false);
+        }
     }else{
-        cb(false);
+        if(['post_its', 'dailys'].includes(args.type)){
+            for(let obj of args.data){
+                if(!global.data[data.type].hasOwnProperty(obj.sprint)){
+                    global.data[data.type][obj.sprint] = {};
+                }
+                global.data[data.type][obj.sprint][obj.id] = obj;
+            }
+            if(!global.loaded[args.type]){
+                global.loaded[args.type] = true;
+                cb(true);
+            }else{
+                cb(false);
+            }
+        }else{
+            cb(false);
+        }
     }
 }
 
@@ -149,7 +168,12 @@ function create(type, data){
  * @param callback - The callback that will be called at the end
  */
 function update_item(item, type, callback){
-    global.data[type][item.id] = item;
+    if(['user_stories', 'projects', 'sprints', 'us_sprints'].includes(type)){
+        global.data[type][item.id] = item;
+    }
+    if(['post_its', 'dailys'].includes(type)){
+        global.data[type][item.sprint][item.id] = item;
+    }
     callback();
 };
 
@@ -161,8 +185,16 @@ function update_item(item, type, callback){
  * @param callback - The callback that will be called at the end
  */
 function delete_item(item, type, callback){
-    if(global.data[type].hasOwnProperty(item.id)){
-        delete global.data[type][item.id];
+    if(['user_stories', 'projects', 'sprints', 'us_sprints'].includes(type)){
+        if(global.data[type].hasOwnProperty(item.id)){
+            delete global.data[type][item.id];
+        }
+    }
+    if(['post_its', 'dailys'].includes(type)){
+        if(global.data[type].hasOwnProperty(item.sprint) &&
+            global.data[type][item.sprint].hasOwnProperty(item.id)){
+            delete global.data[type][item.sprint][item.id];
+        }
     }
     callback();
 }

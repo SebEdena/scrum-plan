@@ -4,8 +4,8 @@
  * @author Sébastien Viguier
  */
 'use strict';
-let drake = null; //The drag and drop system
-let window_height = 0; //The height of the window
+let sp_drake = null; //The drag and drop system
+let sp_window_height = 0; //The height of the window
 
 $(document).ready(($)=>{
     $.datetimepicker.setDateFormatter('moment');
@@ -17,7 +17,7 @@ $(document).ready(($)=>{
     }, 'The interval is invalid');
 
     $("#spr_us").data('spr_id', -1);
-    window_height = $(window).height(); //Gets the height of the window
+    sp_window_height = $(window).height(); //Gets the height of the window
 
     $('#dtp_start').datetimepicker({
         format: "DD/MM/Y HH:mm",
@@ -204,11 +204,11 @@ $(document).ready(($)=>{
     /**
      * @function
      * @description EVENT HANDLER - Defines behaviour on resizing window.
-       Updates the window_height variable.
+       Updates the sp_window_height variable.
      * @listens window:resize
      */
     $(window).resize(()=>{
-        window_height = $(window).height();
+        sp_window_height = $(window).height();
     });
 
     /**
@@ -353,7 +353,7 @@ $(document).ready(($)=>{
         $('#spr_'+sprint.id).find('#spr_total_edit').on('click', ()=>{handle_edit($('#spr_'+sprint.id))});
         $('#spr_'+sprint.id).find('#spr_total_cancel').on('click', ()=>{handle_cancel($('#spr_'+sprint.id))});
         $('#spr_'+sprint.id).find('#spr_start').on('click', ()=>{handle_start($('#spr_'+sprint.id))});
-        drake.containers.push($('#spr_'+sprint.id).find('.spr_us_container')[0]);
+        sp_drake.containers.push($('#spr_'+sprint.id).find('.spr_us_container')[0]);
     }
 
     /**
@@ -442,11 +442,11 @@ $(document).ready(($)=>{
     /**
      * @function init_containers
      * @description Initializes the drag and drop containers and the drag events
-     * @listens drake:drop
+     * @listens sp_drake:drop
      * @listens document:mousemove
      */
     function init_containers(){
-        drake = dragula({
+        sp_drake = dragula({
             accepts: (el, target, source, sibling) => {
                 if($(target).is($(source)) || $(target).prop('id')==="spr_us"){
                     return true;
@@ -462,17 +462,17 @@ $(document).ready(($)=>{
                 return $(el).hasClass('locked');
             }
         });
-        drake.containers.push($('#spr_us')[0]);
-        drake.on('drop', (el, target, source, sibling) => {
+        sp_drake.containers.push($('#spr_us')[0]);
+        sp_drake.on('drop', (el, target, source, sibling) => {
             update_points(el, target, source, true);
         });
         $(document).on('mousemove', function(e) {
             let mousePosition = e.pageY - $(".content-page#spr_backlog").scrollTop();
-            let topRegion = 0.15*window_height;
-            let bottomRegion = window_height - 0.15*window_height;
+            let topRegion = 0.15*sp_window_height;
+            let bottomRegion = sp_window_height - 0.15*sp_window_height;
 
-            if(e.which == 1 && drake.dragging && (mousePosition < topRegion || mousePosition > bottomRegion)){    // e.wich = 1 => click down !
-                let distance = e.clientY - window_height / 2;
+            if(e.which == 1 && sp_drake.dragging && (mousePosition < topRegion || mousePosition > bottomRegion)){    // e.wich = 1 => click down !
+                let distance = e.clientY - sp_window_height / 2;
                 distance = distance * 0.1; // <- velocity
                 $(".pane").scrollTop( distance + $(".pane").scrollTop()) ;
             }

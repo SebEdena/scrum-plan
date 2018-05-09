@@ -15,6 +15,8 @@ $(document).ready(($) => {
     ipcRenderer.send("load", {type:"user_stories"}); //asks to load the user stories
     ipcRenderer.send("load", {type:"sprints"}); //asks to load the sprints
     ipcRenderer.send("load", {type:"us_sprints"}); //asks to load the user stories bound to a sprint
+    ipcRenderer.send("load", {type:"post_its"});
+    ipcRenderer.send("load", {type:"dailys"});
 
     /**
      * @function

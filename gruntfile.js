@@ -34,11 +34,15 @@ module.exports = (grunt) => {
     grunt.initConfig({
         build_dest: null,
         copy: {
-            app:{
+            app:{ files: [{
                 expand: true,
                 cwd: src + '/img',
                 src: ['**/*.jpg', '**/*.png', '!nok.png', '!ok.png'],
-                dest: dest + '/img'
+                dest: dest + '/img'},
+                {expand: true,
+                cwd: src + '/css/fonts',
+                src: ['**/photon-entypo.*'],
+                dest: dest + '/css/fonts'}]
             },
             dev_spec: {
                 expand:true,
