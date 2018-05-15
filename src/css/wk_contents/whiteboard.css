@@ -1,5 +1,7 @@
 .wh_post_it{
-    display: flex !important;
+    height: 90px;
+    width: 90px;
+    font-size: 1.1rem;
 }
 
 .wh_us_pi {
@@ -40,14 +42,14 @@
     text-justify: inter-character;
 }
 
-@media screen and (max-width: 1300px){
-    .h-content div{
-        font-size: 0.8rem;
-    }
+.wh_status {
+    min-height: 3vh;
 }
 
-@media screen and (min-width: 1700px){
-    .h-content div{
-        font-size: 1.2rem;
+@media screen and (max-width: 1420px){
+    .wh_post_it{
+        height: 60px;
+        width: 60px;
+        font-size: 0.8rem;
     }
 }

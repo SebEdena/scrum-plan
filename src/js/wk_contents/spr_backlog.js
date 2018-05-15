@@ -456,7 +456,8 @@ $(document).ready(($)=>{
             },
             moves: function (el, source, handle, sibling) {
                 return $(el).hasClass('spr_user_story') &&
-                    $(source).parents().closest(".pj_spr").data('status') < 0;
+                    ($(source).prop('id') === "spr_us" ||
+                    $(source).parents().closest(".pj_spr").data('status') < 0);
             },
             invalid: function (el, handle) {
                 return $(el).hasClass('locked');

@@ -9,12 +9,33 @@ let wh_window_height = 0; //The height of the window
 
 $(document).ready(($)=>{
 
-        $(".wh_post_it").tooltip({
-            html:true,
-            title: `<div><b>US #1</b></div>
-                    <div><b>Subtask #14</b></div>
-                    <div class="wh_tooltip_logs">It seems that evos prefer asphalt conditions wheras aioooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooIt seems that evos prefer asphalt conditions wheras aiooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo0123456789</div>`
+        // $(".wh_post_it").tooltip({
+        //     html:true,
+        //     title: `<div><b>US #1</b></div>
+        //             <div><b>Subtask #14</b></div>
+        //             <div class="wh_tooltip_logs">It seems that evos prefer asphalt conditions wheras aioooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooIt seems that evos prefer asphalt conditions wheras aiooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo0123456789</div>`
+        // });
+
+        wh_drake = dragula([],{
+            moves: (el, target, source, sibling) => {
+                return $(el).hasClass('wh_post_it');
+            },
+            accepts: (el, target, source, sibling)=>{
+                console.log($(target).hasClass('wh_status'));
+                return true;
+            }
+        }).on('over', (el, container, source) =>{
+            console.log(container);
         });
+
+        // .on('drag',(el, source)=>{
+        //     $(el).removeClass('h');
+        // }).on('dragend', (el)=>{
+        //     $(el).addClass('h');
+        // });
+        for(let item of $(".wh_status")){
+            wh_drake.containers.push(item);
+        }
         // $(document).on('mousemove', function(e) {
         //     let mousePosition = e.pageY - $(".content-page#whiteboard").scrollTop();
         //     let topRegion = 0.15*window_height;
