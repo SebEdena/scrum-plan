@@ -13,6 +13,9 @@ $(document).ready(($)=>{
         return moment(value, 'DD/MM/Y HH:mm').isValid();
     }, 'This date is invalid');
     $.validator.addMethod("valid_interval", (value, element)=>{
+        if(value === "" || $("#dtp_end").val() === ""){
+            return true;
+        }
         return moment(value, 'DD/MM/Y HH:mm').isSameOrBefore(moment($("#dtp_end").val(), 'DD/MM/Y HH:mm'));
     }, 'The interval is invalid');
 
@@ -45,6 +48,11 @@ $(document).ready(($)=>{
         }
     });
 
+    /**
+     * @function
+     * @description EVENT HANDLER - Defines behaviour when start sprint modal is hidden
+     * @listens #modal_start_sprint:hidden.bs.modal
+     */
     $("#modal_start_sprint").on('hidden.bs.modal', ()=>{
         $("#modal_start_sprint").find('.dtp').datetimepicker('reset');
         $('#dtp_start').datetimepicker('setOptions', {maxDate: false, maxTime: false});
@@ -395,7 +403,7 @@ $(document).ready(($)=>{
     }
 
     /**
-     * @function handle_edit
+     * @function handle_cancel
      * @description Handles the click on a "Cancel" button
      * @param item - The html node of the user story
      */
@@ -410,6 +418,11 @@ $(document).ready(($)=>{
                                         .prop("disabled", true);
     }
 
+    /**
+     * @function handle_start
+     * @description Handles the click on a "Start" button
+     * @param item - The html node of the user story
+     */
     function handle_start(item){
         $("#modal_start_sprint").find('h4').text("Start Sprint #" + item.data('spr_id'));
         $('#modal_start_sprint').find('form').validate({
@@ -534,6 +547,11 @@ $(document).ready(($)=>{
         }
     }
 
+    /**
+     * @function can_delete_sprint
+     * @description Checks if the last sprint can be deleted
+     * @returns true if it can be deleted, false otherwise
+     */
     function can_delete_sprint(){
         let items = $(".pj_spr:not(#spr_us)");
         if(!items.length){

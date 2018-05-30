@@ -52,10 +52,10 @@ function init(server){
  * @function init_events
  * @description Initializes the events that the module will listen to
  * @listens io:connection - Everytime a new socket is created from a client app
- * @listens io:disconnect - Everytime a socket is disconnected from a client app
- * @listens pool:error - Any error from the pool of client available for client apps
+ * @listens socket:disconnect - Everytime a socket is disconnected from a client app
  * @fires socket:srvError - To inform a client of the server being unavailable
  * @fires socket:srvInfo - To inform a client of the server availability
+ * @listens pool:error - Any error from the pool of client available for client apps
  * @see DBSocketLinker
  */
 function init_events(){
@@ -64,7 +64,7 @@ function init_events(){
         if(!global.online){
             socket.emit('srvError', 'DB_UNAVAILABLE');
         }else{
-            new DBSocketLinker(pool, socket, io);
+            new DBSocketLinker(pool, socket);
             socket.emit('srvInfo', 'DB_OK');
         }
         socket.on("disconnect", (reason)=>{

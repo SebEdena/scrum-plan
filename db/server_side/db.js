@@ -22,6 +22,7 @@ function DBSocketLinker(db_cli, skt){
 /**
  * @function DBSocketLinker#initEvents
  * @description Initializes the events ot the module
+ * @public
  * @listens socket:load - When the client app is asking to load data
  * @listens socket:create - When the client app asks to create data
  * @listens socket:upload - When the client app asks to upload data
@@ -83,6 +84,7 @@ DBSocketLinker.prototype.initEvents = function(){
 /**
  * @function DBSocketLinker#load
  * @description Loads a particular type of object from the database
+ * @public
  * @param type - The type of data that needs to be loaded
  * @param data - The input of what needs to be loaded
  * @param cb - The callback that will be called at the end
@@ -131,6 +133,14 @@ DBSocketLinker.prototype.load = function(type, data, cb){
     }
 }
 
+/**
+ * @function DBSocketLinker#_classicQuery
+ * @description Executes a non-transactional query
+ * @private
+ * @param query - The query object to be executed
+ * @param needResult - If the calling function needs to be sent a result, will return null if not, or the error
+ * @param cb - The callback that will be called at the end
+ */
 DBSocketLinker.prototype._classicQuery = function(query, needResult, cb){
     this.db.query(query, (err, res) => {
         if(err){
@@ -146,6 +156,8 @@ DBSocketLinker.prototype._classicQuery = function(query, needResult, cb){
  * @param type - The type of data that needs to be inserted
  * @param data - The data to be inserted
  * @param cb - The callback that will be called at the end
+ * @see DBSocketLinker#_classicQuery
+ * @see DBSocketLinker#_transacCreate
  */
 DBSocketLinker.prototype.create = function(type, data, cb){
     switch(type){
@@ -160,6 +172,13 @@ DBSocketLinker.prototype.create = function(type, data, cb){
     }
 }
 
+/**
+ * @function DBSocketLinker#_transacCreate
+ * @description Performs a transactional INSERT
+ * @param type - The type of INSERT to perform
+ * @param data - The data of the insertion
+ * @param cb - The callback that will be called at the end
+ */
 DBSocketLinker.prototype._transacCreate = async function(type, data, cb){
     if(['us'].includes(type)){
         const client = await this.db.connect();
@@ -190,6 +209,8 @@ DBSocketLinker.prototype._transacCreate = async function(type, data, cb){
  * @description Sends an update query to the database
  * @param args - The type and data of the object to be updated
  * @param cb - The callback that will be called at the end
+ * @see DBSocketLinker#_classicQuery
+ * @see DBSocketLinker#_transacUpdate
  */
 DBSocketLinker.prototype.send_update = function(args, cb){
     switch(args.type){
@@ -208,6 +229,13 @@ DBSocketLinker.prototype.send_update = function(args, cb){
     }
 }
 
+/**
+ * @function DBSocketLinker#_transacUpdate
+ * @description Performs a transactional UPDATE
+ * @param type - The type of UPDATE to perform
+ * @param data - The data of the update
+ * @param cb - The callback that will be called at the end
+ */
 DBSocketLinker.prototype._transacUpdate = async function(type, data, cb){
     if(['us', 'usp_remove_overflow', 'usp_update_overflow'].includes(type)){
         const client = await this.db.connect();
@@ -259,6 +287,7 @@ DBSocketLinker.prototype._transacUpdate = async function(type, data, cb){
  * @description Sends a delete query to the database
  * @param args - The type and data of the object to be deleted
  * @param cb - The callback that will be called at the end
+ * @see DBSocketLinker#_transacDelete
  */
 DBSocketLinker.prototype.send_delete = function(args, cb){
     let query = null;
@@ -269,6 +298,13 @@ DBSocketLinker.prototype.send_delete = function(args, cb){
     }
 }
 
+/**
+ * @function DBSocketLinker#_transacDelete
+ * @description Performs a transactional DELETE
+ * @param type - The type of DELETE to perform
+ * @param data - The data of the deletion
+ * @param cb - The callback that will be called at the end
+ */
 DBSocketLinker.prototype._transacDelete = async function(type, data, cb){
     if(['us', 'sprint'].includes(type)){
         const client = await this.db.connect();

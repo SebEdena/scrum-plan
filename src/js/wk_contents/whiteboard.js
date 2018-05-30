@@ -9,12 +9,12 @@ let wh_window_height = 0; //The height of the window
 
 $(document).ready(($)=>{
 
-        // $(".wh_post_it").tooltip({
-        //     html:true,
-        //     title: `<div><b>US #1</b></div>
-        //             <div><b>Subtask #14</b></div>
-        //             <div class="wh_tooltip_logs">It seems that evos prefer asphalt conditions wheras aioooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooIt seems that evos prefer asphalt conditions wheras aiooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo0123456789</div>`
-        // });
+        $(".wh_post_it").tooltip({
+            html:true,
+            title: `<div><b>US #1</b></div>
+                    <div><b>Subtask #14</b></div>
+                    <div class="wh_tooltip_logs">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer non felis dapibus, eleifend ligula non, suscipit quam. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Cras a sapien sem. Maecenas et ante diam nullam.</div>`
+        });
 
         wh_drake = dragula([],{
             moves: (el, target, source, sibling) => {

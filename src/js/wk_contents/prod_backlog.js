@@ -16,6 +16,7 @@ $(document).ready(($)=>{
      * @listens ipcRenderer:fetched
      * @param event - The event
      * @param args - Parameters of the event
+     * @see check_us
      */
     ipcRenderer.on("fetched", (event, args) => {
         if(!(args.err || ~asked_fetch['prod_backlog'].indexOf(args.type))){
@@ -70,6 +71,7 @@ $(document).ready(($)=>{
      * @listens ipcRenderer:update
      * @param event - The event
      * @param args - Parameters of the event
+     * @see check_us
      */
     ipcRenderer.on('update', (event, args) => {
         if(args.type === "user_stories"){
@@ -260,6 +262,11 @@ $(document).ready(($)=>{
         });
     }
 
+    /**
+     * @function check_us
+     * @description Checks for each US if they are locked or not
+     * @param us - The id of the US
+     */
     function check_us(us=null){
         let usp = remote.getGlobal('data').us_sprints;
         for(let i in usp){
